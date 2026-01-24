@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../providers/onboarding_preferences_provider.dart';
@@ -165,7 +166,7 @@ class _OnboardingIllustration extends StatelessWidget {
   }
 }
 
-/// Ilustración de cine/teatro
+/// Ilustración de cine/teatro con animación Lottie
 class _CinemaIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -184,11 +185,11 @@ class _CinemaIllustration extends StatelessWidget {
           ],
         ),
         border: Border.all(
-          color: colors.textPrimary.withOpacity(0.05),
+          color: colors.textPrimary.withValues(alpha: 0.05),
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.accent.withOpacity(0.05),
+            color: colors.accent.withValues(alpha: 0.08),
             blurRadius: 40,
             offset: const Offset(0, 20),
           ),
@@ -198,7 +199,33 @@ class _CinemaIllustration extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // Pantalla de cine
+            // Fondo con gradiente sutil
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.center,
+                    radius: 0.8,
+                    colors: [
+                      colors.accent.withValues(alpha: 0.03),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Animación Lottie de partículas cinematográficas
+            Positioned.fill(
+              child: Lottie.asset(
+                'assets/animations/cinema_particles.json',
+                fit: BoxFit.cover,
+                repeat: true,
+                animate: true,
+              ),
+            ),
+
+            // Pantalla de cine (marco)
             Positioned.fill(
               child: CustomPaint(
                 painter: _CinemaScreenPainter(
@@ -209,42 +236,57 @@ class _CinemaIllustration extends StatelessWidget {
               ),
             ),
 
-            // Reflejo
+            // Efecto de luz spotlight superior
             Positioned(
-              bottom: 0,
+              top: 0,
               left: 0,
               right: 0,
-              height: 60,
+              height: 100,
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
+                      colors.accent.withValues(alpha: 0.06),
                       Colors.transparent,
-                      colors.accent.withOpacity(0.03),
                     ],
                   ),
                 ),
               ),
             ),
 
-            // Luz spotlight
+            // Reflejo inferior
             Positioned(
-              top: 20,
+              bottom: 0,
               left: 0,
               right: 0,
-              child: Center(
-                child: Container(
-                  width: 200,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      colors: [
-                        Colors.white.withOpacity(0.03),
-                        Colors.transparent,
-                      ],
-                    ),
+              height: 80,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      colors.accent.withValues(alpha: 0.04),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Viñeta sutil
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.center,
+                    radius: 1.2,
+                    colors: [
+                      Colors.transparent,
+                      colors.background.withValues(alpha: 0.3),
+                    ],
                   ),
                 ),
               ),

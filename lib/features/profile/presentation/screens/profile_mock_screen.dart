@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Colors, Icons, Material;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -436,8 +437,8 @@ class _LanguageSelectorModal extends StatelessWidget {
   });
 
   static const _languages = [
-    ('es', 'Español', '🇪🇸'),
-    ('en', 'English', '🇺🇸'),
+    ('es', 'Español'),
+    ('en', 'English'),
   ];
 
   @override
@@ -447,7 +448,7 @@ class _LanguageSelectorModal extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.colors.surfaceElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         top: false,
@@ -460,10 +461,10 @@ class _LanguageSelectorModal extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Column(
                 children: _languages.map((lang) {
-                  final (code, name, flag) = lang;
+                  final (code, name) = lang;
                   final isSelected = code == selectedLanguage;
-                  return _ModalOption(
-                    flag: flag,
+                  return _LanguageOption(
+                    code: code,
                     label: name,
                     isSelected: isSelected,
                     onTap: () {
@@ -775,14 +776,15 @@ class _ModalHeader extends StatelessWidget {
   }
 }
 
-class _ModalOption extends StatelessWidget {
-  final String flag;
+/// Opción de idioma con bandera SVG
+class _LanguageOption extends StatelessWidget {
+  final String code;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _ModalOption({
-    required this.flag,
+  const _LanguageOption({
+    required this.code,
     required this.label,
     required this.isSelected,
     required this.onTap,
@@ -810,7 +812,16 @@ class _ModalOption extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(flag, style: const TextStyle(fontSize: 24)),
+            // Bandera SVG con bordes redondeados
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SvgPicture.asset(
+                'assets/flags/$code.svg',
+                width: 32,
+                height: 22,
+                fit: BoxFit.cover,
+              ),
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
