@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <linearGradient id="kineonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2EE9D8"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo oscuro -->
+  <rect width="1024" height="1024" fill="#0B0F14"/>
+
+  <!-- Contenido escalado al 65% y centrado -->
+  <g transform="translate(512, 512) scale(0.65) translate(-512, -512)">
+    <!-- Play button principal -->
+    <path
+      d="M384 256v512c0 43.2 47 69.7 83.7 47l451.2-293.5c34.6-22.2 34.6-71.8 0-94L467.7 134c-36.7-22.7-83.7 3.8-83.7 47z"
+      fill="url(#kineonGradient)"
+    />
+
+    <!-- Nodos IA -->
+    <circle cx="256" cy="320" r="52" fill="#2EE9D8" opacity="0.9"/>
+    <circle cx="192" cy="512" r="36" fill="#8B5CF6" opacity="0.8"/>
+    <circle cx="276" cy="704" r="44" fill="#2EE9D8" opacity="0.7"/>
+
+    <!-- Líneas de conexión -->
+    <path d="M256 354v122" stroke="#2EE9D8" stroke-width="20" stroke-linecap="round" opacity="0.5"/>
+    <path d="M220 536l40 140" stroke="#8B5CF6" stroke-width="20" stroke-linecap="round" opacity="0.4"/>
+  </g>
+</svg>

@@ -1,0 +1,116 @@
+name: kineon
+description: "Kineon - Tu app de películas y series con IA"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  flutter_animate: ^4.5.0
+  
+  # State Management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+  
+  # Navigation
+  go_router: ^14.2.0
+  
+  # Supabase
+  supabase_flutter: ^2.5.9
+  
+  # Storage & Cache
+  shared_preferences: ^2.3.1
+  flutter_secure_storage: ^9.2.2
+  hive_flutter: ^1.1.0
+  
+  # Utilities
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  intl: ^0.20.2
+  uuid: ^4.4.2
+  equatable: ^2.0.5
+  dartz: ^0.10.1
+  http: ^1.2.1
+  share_plus: ^10.1.4
+  url_launcher: ^6.3.1
+  
+  # Image
+  flutter_svg: ^2.0.10+1
+
+  # Authentication
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.4
+  crypto: ^3.0.6
+  speech_to_text: ^7.3.0
+
+  # Observability
+  sentry_flutter: ^8.12.0
+  connectivity_plus: ^7.0.0
+
+  # Notifications
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.11
+  freezed: ^2.5.2
+  json_serializable: ^6.8.0
+  riverpod_generator: ^2.4.0
+  riverpod_lint: ^2.3.10
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  # Android Adaptive Icon (logo más grande sobre fondo negro)
+  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
+  adaptive_icon_background: "#0B0F14"
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+  macos:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+
+flutter_native_splash:
+  color: "#0B0F14"
+  image: assets/icons/app_icon.png
+  color_dark: "#0B0F14"
+  image_dark: assets/icons/app_icon.png
+  android_12:
+    color: "#0B0F14"
+    icon_background_color: "#0B0F14"
+    image: assets/icons/app_icon.png
+    color_dark: "#0B0F14"
+    icon_background_color_dark: "#0B0F14"
+    image_dark: assets/icons/app_icon.png
+  ios: true
+  web: true
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  # Fuentes se cargan via google_fonts en runtime
+  # (Space Grotesk para títulos, Inter para cuerpo)
