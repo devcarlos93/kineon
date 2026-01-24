@@ -37,10 +37,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void initState() {
     super.initState();
     _rotateSuggestion();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    // Cerrar teclado al hacer scroll
+    if (_scrollController.position.isScrollingNotifier.value) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -85,6 +94,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   void _onFilterChanged(SearchFilter newFilter) {
+    _dismissKeyboard();
     setState(() => _filter = newFilter);
     if (_hasSearched) {
       _performSearch(_searchController.text);
@@ -175,6 +185,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return user?.userMetadata?['avatar_url'] as String?;
   }
 
+  void _dismissKeyboard() {
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -182,20 +196,28 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            SearchHeader(
-              avatarUrl: _avatarUrl,
-              hasNotifications: true,
-              onAvatarTap: () {
-                // TODO: Go to profile
-              },
-              onNotificationsTap: () {
-                // TODO: Show notifications
-              },
-            ).animate().fadeIn(duration: 400.ms),
+      body: GestureDetector(
+        onTap: _dismissKeyboard,
+        behavior: HitTestBehavior.opaque,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Header
+              SearchHeader(
+                avatarUrl: _avatarUrl,
+                hasNotifications: true,
+                showBackButton: true,
+                onBackTap: () {
+                  _dismissKeyboard();
+                  context.pop();
+                },
+                onAvatarTap: () {
+                  // TODO: Go to profile
+                },
+                onNotificationsTap: () {
+                  // TODO: Show notifications
+                },
+              ).animate().fadeIn(duration: 400.ms),
 
             const SizedBox(height: 8),
 
@@ -217,7 +239,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     });
                   }
                 },
-                onSubmitted: _performSearch,
+                onSubmitted: (value) {
+                  _dismissKeyboard();
+                  _performSearch(value);
+                },
                 onClear: () {
                   setState(() {
                     _hasSearched = false;
@@ -245,6 +270,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -252,21 +278,29 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget _buildContent() {
     // Initial state
     if (!_hasSearched) {
-      return const SearchEmptyState(isInitial: true)
-          .animate()
-          .fadeIn(delay: 300.ms, duration: 400.ms);
+      return GestureDetector(
+        onTap: _dismissKeyboard,
+        behavior: HitTestBehavior.opaque,
+        child: const SearchEmptyState(isInitial: true),
+      ).animate().fadeIn(delay: 300.ms, duration: 400.ms);
     }
 
     // Loading
     if (_isLoading) {
-      return const ResultsGridSkeleton();
+      return GestureDetector(
+        onTap: _dismissKeyboard,
+        behavior: HitTestBehavior.opaque,
+        child: const ResultsGridSkeleton(),
+      );
     }
 
     // No results
     if (_results.isEmpty) {
-      return const SearchEmptyState(isInitial: false)
-          .animate()
-          .fadeIn(duration: 400.ms);
+      return GestureDetector(
+        onTap: _dismissKeyboard,
+        behavior: HitTestBehavior.opaque,
+        child: const SearchEmptyState(isInitial: false),
+      ).animate().fadeIn(duration: 400.ms);
     }
 
     // Results
@@ -281,6 +315,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         Expanded(
           child: GridView.builder(
             controller: _scrollController,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,

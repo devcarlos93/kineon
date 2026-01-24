@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/subscription_state.dart';
 
@@ -36,7 +37,20 @@ class PaywallModal extends ConsumerWidget {
     );
   }
 
-  String get _featureName => AIEndpoints.getDisplayName(endpoint);
+  String _getFeatureName(AppStrings strings) {
+    switch (endpoint) {
+      case AIEndpoints.chat:
+        return strings.paywallFeatureAIChat;
+      case AIEndpoints.search:
+        return strings.paywallFeatureAISearch;
+      case AIEndpoints.insight:
+        return strings.paywallFeatureAIInsight;
+      case AIEndpoints.picks:
+        return strings.paywallFeatureAIPicks;
+      default:
+        return 'IA';
+    }
+  }
 
   int get _dailyLimit {
     switch (endpoint) {
@@ -45,6 +59,7 @@ class PaywallModal extends ConsumerWidget {
       case AIEndpoints.picks:
         return 5;
       case AIEndpoints.search:
+        return 6;
       case AIEndpoints.insight:
       default:
         return 3;
@@ -54,6 +69,7 @@ class PaywallModal extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: colors.surface,
@@ -102,7 +118,7 @@ class PaywallModal extends ConsumerWidget {
 
               // Title
               Text(
-                'Has alcanzado tu límite diario',
+                l10n.strings.paywallTitle,
                 style: AppTypography.h3.copyWith(
                   fontWeight: FontWeight.w700,
                   color: colors.textPrimary,
@@ -114,8 +130,7 @@ class PaywallModal extends ConsumerWidget {
 
               // Description
               Text(
-                'Tu plan gratuito incluye $_dailyLimit usos diarios de $_featureName. '
-                'Actualiza a Pro para disfrutar de IA ilimitada.',
+                l10n.strings.paywallDescription(_dailyLimit, _getFeatureName(l10n.strings)),
                 style: AppTypography.bodyMedium.copyWith(
                   color: colors.textSecondary,
                   height: 1.5,
@@ -126,7 +141,7 @@ class PaywallModal extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // Pro features preview
-              _ProFeaturesPreview(),
+              _ProFeaturesPreview(l10n: l10n),
 
               const SizedBox(height: 24),
 
@@ -162,7 +177,7 @@ class PaywallModal extends ConsumerWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Actualizar a Pro',
+                          l10n.strings.paywallUpgrade,
                           style: AppTypography.labelLarge.copyWith(
                             color: colors.textOnAccent,
                             fontWeight: FontWeight.w600,
@@ -192,7 +207,7 @@ class PaywallModal extends ConsumerWidget {
                   ),
                   child: Center(
                     child: Text(
-                      'Vuelve mañana',
+                      l10n.strings.paywallComeback,
                       style: AppTypography.labelMedium.copyWith(
                         color: colors.textSecondary,
                       ),
@@ -214,7 +229,7 @@ class PaywallModal extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Tu límite se renueva a medianoche',
+                    l10n.strings.paywallResetTime,
                     style: AppTypography.caption.copyWith(
                       color: colors.textTertiary,
                     ),
@@ -231,13 +246,19 @@ class PaywallModal extends ConsumerWidget {
 
 /// Preview de features Pro
 class _ProFeaturesPreview extends StatelessWidget {
+  final AppLocalizations l10n;
+
+  const _ProFeaturesPreview({required this.l10n});
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final features = [
-      ('Chat IA ilimitado', Icons.chat_bubble_outline_rounded),
-      ('Búsqueda inteligente sin límites', Icons.search_rounded),
-      ('Insights de películas ilimitados', Icons.lightbulb_outline_rounded),
+      (l10n.strings.paywallFeatureChat, Icons.chat_bubble_outline_rounded),
+      (l10n.strings.paywallFeatureSearch, Icons.search_rounded),
+      (l10n.strings.paywallFeatureRecommendations, Icons.auto_awesome_rounded),
+      (l10n.strings.paywallFeatureLists, Icons.playlist_add_rounded),
+      (l10n.strings.paywallFeatureEarlyAccess, Icons.rocket_launch_rounded),
     ];
 
     return Container(
@@ -268,7 +289,7 @@ class _ProFeaturesPreview extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Incluye:',
+                l10n.strings.paywallProIncludes,
                 style: AppTypography.labelMedium.copyWith(
                   color: colors.textSecondary,
                 ),

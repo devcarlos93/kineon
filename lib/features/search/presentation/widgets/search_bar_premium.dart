@@ -133,6 +133,7 @@ class _SearchBarPremiumState extends State<SearchBarPremium> {
                   onPressed: () {
                     HapticFeedback.lightImpact();
                     widget.controller.clear();
+                    _focusNode.unfocus();
                     widget.onClear?.call();
                   },
                   child: Icon(

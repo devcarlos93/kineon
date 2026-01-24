@@ -816,6 +816,59 @@ class StringsEn implements AppStrings {
   @override
   String get profileFeatureEarlyAccess => 'Early Access to New Features';
 
+  @override
+  String get profileFeatureUnlimitedLists => 'Unlimited Custom Lists';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PAYWALL
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  String get paywallTitle => 'You\'ve reached your daily limit';
+
+  @override
+  String paywallDescription(int limit, String feature) =>
+      'Your free plan includes $limit daily uses of $feature. Upgrade to Pro for unlimited AI.';
+
+  @override
+  String get paywallUpgrade => 'Upgrade to Pro';
+
+  @override
+  String get paywallComeback => 'Come back tomorrow';
+
+  @override
+  String get paywallResetTime => 'Your limit resets at midnight';
+
+  @override
+  String get paywallProIncludes => 'Includes:';
+
+  @override
+  String get paywallFeatureChat => 'Unlimited AI Chat';
+
+  @override
+  String get paywallFeatureSearch => 'Unlimited Smart Search';
+
+  @override
+  String get paywallFeatureRecommendations => 'Unlimited AI Recommendations';
+
+  @override
+  String get paywallFeatureLists => 'Unlimited Custom Lists';
+
+  @override
+  String get paywallFeatureEarlyAccess => 'Early Access to New Features';
+
+  @override
+  String get paywallFeatureAIChat => 'AI Chat';
+
+  @override
+  String get paywallFeatureAISearch => 'AI Search';
+
+  @override
+  String get paywallFeatureAIInsight => 'AI Insights';
+
+  @override
+  String get paywallFeatureAIPicks => 'AI Recommendations';
+
   // ═══════════════════════════════════════════════════════════════════════════
   // PREFERENCES SELECTOR (ONBOARDING)
   // ═══════════════════════════════════════════════════════════════════════════

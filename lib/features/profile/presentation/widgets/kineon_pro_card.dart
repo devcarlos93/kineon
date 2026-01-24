@@ -119,8 +119,8 @@ class _KineonProCardState extends State<KineonProCard> {
             title: l10n.strings.profileFeatureUnlimitedChat,
           ),
           _LocalizedFeatureRow(
-            icon: CupertinoIcons.cloud_download,
-            title: l10n.strings.profileFeatureOfflineSync,
+            icon: CupertinoIcons.list_bullet,
+            title: l10n.strings.profileFeatureUnlimitedLists,
           ),
           _LocalizedFeatureRow(
             icon: CupertinoIcons.checkmark_seal,

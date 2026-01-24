@@ -816,6 +816,59 @@ class StringsEs implements AppStrings {
   @override
   String get profileFeatureEarlyAccess => 'Acceso anticipado a nuevas funciones';
 
+  @override
+  String get profileFeatureUnlimitedLists => 'Listas personalizadas sin límites';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PAYWALL
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  String get paywallTitle => 'Has alcanzado tu límite diario';
+
+  @override
+  String paywallDescription(int limit, String feature) =>
+      'Tu plan gratuito incluye $limit usos diarios de $feature. Actualiza a Pro para disfrutar de IA ilimitada.';
+
+  @override
+  String get paywallUpgrade => 'Actualizar a Pro';
+
+  @override
+  String get paywallComeback => 'Vuelve mañana';
+
+  @override
+  String get paywallResetTime => 'Tu límite se renueva a medianoche';
+
+  @override
+  String get paywallProIncludes => 'Incluye:';
+
+  @override
+  String get paywallFeatureChat => 'Chat IA ilimitado';
+
+  @override
+  String get paywallFeatureSearch => 'Búsqueda inteligente sin límites';
+
+  @override
+  String get paywallFeatureRecommendations => 'Recomendaciones IA ilimitadas';
+
+  @override
+  String get paywallFeatureLists => 'Listas personalizadas sin límites';
+
+  @override
+  String get paywallFeatureEarlyAccess => 'Acceso adelantado a nuevas funciones';
+
+  @override
+  String get paywallFeatureAIChat => 'Chat IA';
+
+  @override
+  String get paywallFeatureAISearch => 'Búsqueda IA';
+
+  @override
+  String get paywallFeatureAIInsight => 'Insights IA';
+
+  @override
+  String get paywallFeatureAIPicks => 'Recomendaciones IA';
+
   // ═══════════════════════════════════════════════════════════════════════════
   // PREFERENCES SELECTOR (ONBOARDING)
   // ═══════════════════════════════════════════════════════════════════════════

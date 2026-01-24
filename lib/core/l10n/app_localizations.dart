@@ -537,6 +537,24 @@ abstract class AppStrings {
   String get profileFeatureUnlimitedChat;
   String get profileFeatureOfflineSync;
   String get profileFeatureEarlyAccess;
+  String get profileFeatureUnlimitedLists;
+
+  // Paywall
+  String get paywallTitle;
+  String paywallDescription(int limit, String feature);
+  String get paywallUpgrade;
+  String get paywallComeback;
+  String get paywallResetTime;
+  String get paywallProIncludes;
+  String get paywallFeatureChat;
+  String get paywallFeatureSearch;
+  String get paywallFeatureRecommendations;
+  String get paywallFeatureLists;
+  String get paywallFeatureEarlyAccess;
+  String get paywallFeatureAIChat;
+  String get paywallFeatureAISearch;
+  String get paywallFeatureAIInsight;
+  String get paywallFeatureAIPicks;
 
   // Preferences Selector (Onboarding)
   String get prefsTellUs;

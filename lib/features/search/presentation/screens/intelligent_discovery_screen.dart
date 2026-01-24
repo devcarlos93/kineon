@@ -42,6 +42,16 @@ class _IntelligentDiscoveryScreenState
     super.initState();
     _rotateSuggestion();
     _initSpeech();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    // Cerrar teclado al hacer scroll
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
+  void _dismissKeyboard() {
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   Future<void> _initSpeech() async {
@@ -64,6 +74,7 @@ class _IntelligentDiscoveryScreenState
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _searchController.dispose();
     _scrollController.dispose();
     _speech.stop();
@@ -83,6 +94,7 @@ class _IntelligentDiscoveryScreenState
 
   /// Búsqueda explícita (enter, voz) - igual que automática
   void _onSearchSubmit(String query) {
+    _dismissKeyboard();
     _onSearchChanged(query);
   }
 
@@ -156,33 +168,37 @@ class _IntelligentDiscoveryScreenState
       }
     });
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            _buildHeader(),
+    return GestureDetector(
+      onTap: _dismissKeyboard,
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        backgroundColor: colors.background,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              _buildHeader(),
 
-            // Search Input
-            _buildSearchInput(state),
+              // Search Input
+              _buildSearchInput(state),
 
-            // Hint text
-            if (state.query.isEmpty) _buildHintText(),
+              // Hint text
+              if (state.query.isEmpty) _buildHintText(),
 
-            // Intent summary (cuando hay plan)
-            if (state.plan != null && !state.isLoadingPlan)
-              _buildIntentSummary(state.plan!),
+              // Intent summary (cuando hay plan)
+              if (state.plan != null && !state.isLoadingPlan)
+                _buildIntentSummary(state.plan!),
 
-            // Filter Chips
-            _buildFilterChips(state),
+              // Filter Chips
+              _buildFilterChips(state),
 
-            // Content
-            Expanded(
-              child: _buildContent(state, mediaQuery),
-            ),
-          ],
+              // Content
+              Expanded(
+                child: _buildContent(state, mediaQuery),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -615,6 +631,7 @@ class _IntelligentDiscoveryScreenState
         Expanded(
           child: GridView.builder(
             controller: _scrollController,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: EdgeInsets.only(
               left: 20,
               right: 20,

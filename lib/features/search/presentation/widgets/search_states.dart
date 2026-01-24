@@ -11,6 +11,8 @@ import 'search_bar_premium.dart';
 class SearchHeader extends StatelessWidget {
   final String? avatarUrl;
   final bool hasNotifications;
+  final bool showBackButton;
+  final VoidCallback? onBackTap;
   final VoidCallback? onAvatarTap;
   final VoidCallback? onNotificationsTap;
 
@@ -18,6 +20,8 @@ class SearchHeader extends StatelessWidget {
     super.key,
     this.avatarUrl,
     this.hasNotifications = false,
+    this.showBackButton = false,
+    this.onBackTap,
     this.onAvatarTap,
     this.onNotificationsTap,
   });
@@ -31,6 +35,28 @@ class SearchHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Row(
         children: [
+          // Back button
+          if (showBackButton) ...[
+            GestureDetector(
+              onTap: onBackTap,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.surfaceBorder),
+                ),
+                child: Icon(
+                  CupertinoIcons.back,
+                  color: colors.textPrimary,
+                  size: 22,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
+
           // Title section
           Expanded(
             child: Column(
