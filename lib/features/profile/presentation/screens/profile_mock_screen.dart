@@ -10,6 +10,7 @@ import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/l10n/locale_provider.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/analytics_service.dart';
+import '../../../../core/services/revenue_cat_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/mock_profile_data.dart';
 import '../providers/profile_preferences_provider.dart';
@@ -45,7 +46,7 @@ class _ProfileMockScreenState extends ConsumerState<ProfileMockScreen> {
       email: supabaseUser.email ?? '',
       avatarUrl: prefs.avatarUrl ?? supabaseUser.userMetadata?['avatar_url'] as String?,
       memberSince: prefs.memberSince ?? DateTime.tryParse(supabaseUser.createdAt),
-      isPro: false, // TODO: Verificar suscripción real
+      isPro: ref.read(isProProvider), // Verificar suscripción real con RevenueCat
     );
   }
 
@@ -75,14 +76,32 @@ class _ProfileMockScreenState extends ConsumerState<ProfileMockScreen> {
     // TODO: Show avatar picker
   }
 
-  void _handleUpgrade() {
+  void _handleUpgrade() async {
     HapticFeedback.mediumImpact();
-    // TODO: Navigate to paywall
+
+    // Primero intentar restaurar compras existentes
+    final restoreResult = await RevenueCatService().restorePurchases();
+    debugPrint('Restore result: isPro=${restoreResult.isPro}');
+
+    if (restoreResult.isPro) {
+      // Ya tiene suscripción, refrescar UI
+      if (mounted) setState(() {});
+      return;
+    }
+
+    // Mostrar paywall de RevenueCat
+    final result = await RevenueCatService().presentPaywall();
+    debugPrint('Paywall result: $result');
+
+    // Refrescar estado después del paywall
+    await RevenueCatService().refreshStatus();
+    if (mounted) setState(() {});
   }
 
-  void _handleManageSubscription() {
+  void _handleManageSubscription() async {
     HapticFeedback.lightImpact();
-    // TODO: Navigate to subscription management
+    // Mostrar Customer Center de RevenueCat
+    await RevenueCatService().presentCustomerCenter();
   }
 
   void _handleSpoilersChanged(bool value) {

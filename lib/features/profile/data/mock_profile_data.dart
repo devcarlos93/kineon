@@ -117,9 +117,9 @@ final UserProfile mockUserProfile = UserProfile(
 const SubscriptionPlan kineonProPlan = SubscriptionPlan(
   id: 'kineon-pro',
   name: 'Kineon Pro',
-  monthlyPrice: 2.99,
-  annualPrice: 24.99,
-  annualDiscount: 30,
+  monthlyPrice: 1.99,
+  annualPrice: 9.99,
+  annualDiscount: 58,
   features: [
     ProFeature(
       id: 'unlimited-ai',

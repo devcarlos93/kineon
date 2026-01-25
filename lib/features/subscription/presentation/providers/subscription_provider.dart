@@ -3,7 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/network/supabase_client.dart';
+import '../../../../core/services/revenue_cat_service.dart' hide SubscriptionStatus;
 import '../../domain/entities/subscription_state.dart';
+
+// Re-exportar isProProvider de RevenueCat
+export '../../../../core/services/revenue_cat_service.dart' show isProProvider;
 
 /// Provider del estado de suscripción del usuario
 class SubscriptionNotifier extends StateNotifier<UserSubscription> {
@@ -15,6 +19,34 @@ class SubscriptionNotifier extends StateNotifier<UserSubscription> {
 
   Future<void> _init() async {
     await loadSubscription();
+
+    // Escuchar cambios de RevenueCat
+    RevenueCatService().statusStream.listen((rcStatus) {
+      if (rcStatus.isPro && !state.isPro) {
+        // RevenueCat dice que es Pro, actualizar estado
+        state = state.copyWith(
+          status: SubscriptionStatus.pro,
+          isPro: true,
+          provider: 'apple',
+          productId: rcStatus.activeProductId,
+          expiresAt: rcStatus.expirationDate,
+        );
+        debugPrint('📱 Subscription updated from RevenueCat: isPro=true');
+      }
+    });
+
+    // También verificar estado actual de RevenueCat
+    final rcCurrentStatus = RevenueCatService().currentStatus;
+    if (rcCurrentStatus.isPro) {
+      state = state.copyWith(
+        status: SubscriptionStatus.pro,
+        isPro: true,
+        provider: 'apple',
+        productId: rcCurrentStatus.activeProductId,
+        expiresAt: rcCurrentStatus.expirationDate,
+      );
+      debugPrint('📱 Initial subscription from RevenueCat: isPro=true');
+    }
 
     // Escuchar cambios de auth para recargar
     _client.auth.onAuthStateChange.listen((data) {
@@ -47,9 +79,34 @@ class SubscriptionNotifier extends StateNotifier<UserSubscription> {
       debugPrint('📊 Subscription data: $subscriptionData');
       debugPrint('📊 Usage data: $usageData');
 
-      state = UserSubscription.fromJson(subscriptionData, usageData);
+      var newState = UserSubscription.fromJson(subscriptionData, usageData);
+
+      // Verificar también RevenueCat (tiene prioridad)
+      final rcStatus = RevenueCatService().currentStatus;
+      if (rcStatus.isPro && !newState.isPro) {
+        newState = newState.copyWith(
+          status: SubscriptionStatus.pro,
+          isPro: true,
+          provider: 'apple',
+          productId: rcStatus.activeProductId,
+          expiresAt: rcStatus.expirationDate,
+        );
+        debugPrint('📱 RevenueCat override: isPro=true');
+      }
+
+      state = newState;
     } catch (e) {
-      // En caso de error, mantener estado actual o free
+      // En caso de error, verificar RevenueCat
+      final rcStatus = RevenueCatService().currentStatus;
+      if (rcStatus.isPro) {
+        state = state.copyWith(
+          status: SubscriptionStatus.pro,
+          isPro: true,
+          provider: 'apple',
+        );
+        debugPrint('📱 RevenueCat fallback: isPro=true');
+        return;
+      }
       if (!mounted) return;
       // Log error pero no bloquear al usuario
       debugPrint('❌ Error loading subscription: $e');
@@ -92,8 +149,9 @@ class SubscriptionNotifier extends StateNotifier<UserSubscription> {
       );
     }
 
-    // Si es Pro, siempre puede
-    if (state.isPro) {
+    // Si es Pro (RevenueCat o Supabase), siempre puede
+    final isProRevenueCat = RevenueCatService().currentStatus.isPro;
+    if (state.isPro || isProRevenueCat) {
       return CanUseResult(canUse: true, remaining: 999);
     }
 
@@ -186,11 +244,6 @@ final subscriptionProvider =
 final aiUsageProvider = Provider.family<AIFeatureUsage, String>((ref, endpoint) {
   final subscription = ref.watch(subscriptionProvider);
   return subscription.getUsage(endpoint);
-});
-
-/// Provider para verificar si es Pro
-final isProProvider = Provider<bool>((ref) {
-  return ref.watch(subscriptionProvider).isPro;
 });
 
 /// Provider para verificar si puede usar una feature

@@ -13,6 +13,7 @@ import 'core/network/supabase_client.dart';
 import 'core/router/app_router.dart';
 import 'core/services/analytics_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/revenue_cat_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 
@@ -45,22 +46,20 @@ void main() async {
   // Inicializar Analytics/Sentry
   await AnalyticsService.instance.initialize(sentryDsn: _sentryDsn);
 
+  // Inicializar RevenueCat
+  await RevenueCatService().initialize();
+
   // Configurar usuario si ya está autenticado
   final currentUser = Supabase.instance.client.auth.currentUser;
   if (currentUser != null) {
-    AnalyticsService.instance.setUser(
-      currentUser.id,
-      email: currentUser.email,
-    );
+    AnalyticsService.instance.setUser(currentUser.id, email: currentUser.email);
+    // Vincular usuario con RevenueCat
+    await RevenueCatService().loginUser(currentUser.id);
   }
 
   runApp(
     // Envolver con SentryWidget para capturar errores de UI
-    SentryWidget(
-      child: const ProviderScope(
-        child: KineonApp(),
-      ),
-    ),
+    SentryWidget(child: const ProviderScope(child: KineonApp())),
   );
 }
 
@@ -97,9 +96,13 @@ class KineonApp extends ConsumerWidget {
         SystemChrome.setSystemUIOverlayStyle(
           SystemUiOverlayStyle(
             statusBarColor: Colors.transparent,
-            statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+            statusBarIconBrightness: isDark
+                ? Brightness.light
+                : Brightness.dark,
             systemNavigationBarColor: colors.background,
-            systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+            systemNavigationBarIconBrightness: isDark
+                ? Brightness.light
+                : Brightness.dark,
           ),
         );
 

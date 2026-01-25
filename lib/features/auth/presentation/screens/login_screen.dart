@@ -13,6 +13,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/kineon_logo.dart';
+import '../../../../core/services/revenue_cat_service.dart';
 import '../../data/services/apple_auth_service.dart';
 import '../../data/services/google_auth_service.dart';
 
@@ -57,6 +58,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           // Set user in analytics
           if (user != null) {
             ref.read(analyticsServiceProvider).setUser(user.id, email: user.email);
+            // Vincular usuario con RevenueCat
+            await RevenueCatService().loginUser(user.id);
           }
           // Sincronizar preferencias del onboarding a Supabase
           await _syncOnboardingPreferences();
