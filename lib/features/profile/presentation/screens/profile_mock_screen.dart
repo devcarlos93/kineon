@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
@@ -164,12 +165,12 @@ class _ProfileMockScreenState extends ConsumerState<ProfileMockScreen> {
 
   void _handlePrivacyPolicy() {
     HapticFeedback.lightImpact();
-    // TODO: Open privacy policy
+    launchUrl(Uri.parse('https://www.villadiegodev.lat/kineon/politica-de-privacidad'), mode: LaunchMode.externalApplication);
   }
 
   void _handleTermsOfService() {
     HapticFeedback.lightImpact();
-    // TODO: Open terms of service
+    launchUrl(Uri.parse('https://www.villadiegodev.lat/kineon/terminos-y-condiciones'), mode: LaunchMode.externalApplication);
   }
 
   void _handleLogout() {

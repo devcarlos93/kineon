@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -232,6 +233,50 @@ class PaywallModal extends ConsumerWidget {
                     l10n.strings.paywallResetTime,
                     style: AppTypography.caption.copyWith(
                       color: colors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Terms & Privacy links
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () => launchUrl(
+                      Uri.parse('https://www.villadiegodev.lat/kineon/terminos-y-condiciones'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    child: Text(
+                      'Términos de uso',
+                      style: AppTypography.caption.copyWith(
+                        color: colors.textTertiary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      '·',
+                      style: AppTypography.caption.copyWith(
+                        color: colors.textTertiary,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => launchUrl(
+                      Uri.parse('https://www.villadiegodev.lat/kineon/politica-de-privacidad'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    child: Text(
+                      'Política de privacidad',
+                      style: AppTypography.caption.copyWith(
+                        color: colors.textTertiary,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
                 ],
