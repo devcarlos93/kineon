@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Status indicator -->
+  <circle cx="100" cy="46" r="6" fill="#2EE9D8"/>
+  <circle cx="100" cy="46" r="10" stroke="#2EE9D8" stroke-width="1.8" opacity="0.4"/>
+  <line x1="100" y1="56" x2="100" y2="66" stroke="#2EE9D8" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- Main body -->
+  <rect x="26" y="66" width="148" height="98" rx="38" fill="#2EE9D8" fill-opacity="0.06" stroke="#2EE9D8" stroke-width="4"/>
+
+  <!-- Inner visor -->
+  <rect x="42" y="78" width="116" height="74" rx="28" fill="#0B0F14" fill-opacity="0.5" stroke="#2EE9D8" stroke-width="2.5" opacity="0.5"/>
+
+  <!-- Left vent -->
+  <rect x="5" y="90" width="26" height="44" rx="10" fill="#2EE9D8" fill-opacity="0.06" stroke="#2EE9D8" stroke-width="3"/>
+  <line x1="12" y1="103" x2="24" y2="103" stroke="#2EE9D8" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="12" y1="111" x2="24" y2="111" stroke="#2EE9D8" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="12" y1="119" x2="24" y2="119" stroke="#2EE9D8" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+
+  <!-- Right vent -->
+  <rect x="169" y="90" width="26" height="44" rx="10" fill="#2EE9D8" fill-opacity="0.06" stroke="#2EE9D8" stroke-width="3"/>
+  <line x1="176" y1="103" x2="188" y2="103" stroke="#2EE9D8" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="176" y1="111" x2="188" y2="111" stroke="#2EE9D8" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="176" y1="119" x2="188" y2="119" stroke="#2EE9D8" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+
+  <!-- Left lens-eye (teal) -->
+  <circle cx="78" cy="115" r="20" fill="#2EE9D8" fill-opacity="0.1" stroke="#2EE9D8" stroke-width="3.5"/>
+  <circle cx="78" cy="115" r="12" fill="#2EE9D8" opacity="0.2"/>
+  <circle cx="78" cy="115" r="7" fill="#2EE9D8" opacity="0.5"/>
+  <circle cx="72" cy="109" r="4" fill="#ffffff" opacity="0.75"/>
+  <circle cx="83" cy="119" r="1.8" fill="#ffffff" opacity="0.4"/>
+
+  <!-- Right lens-eye (purple) -->
+  <circle cx="122" cy="115" r="20" fill="#8B5CF6" fill-opacity="0.1" stroke="#8B5CF6" stroke-width="3.5"/>
+  <circle cx="122" cy="115" r="12" fill="#8B5CF6" opacity="0.2"/>
+  <circle cx="122" cy="115" r="7" fill="#8B5CF6" opacity="0.5"/>
+  <circle cx="116" cy="109" r="4" fill="#ffffff" opacity="0.75"/>
+  <circle cx="127" cy="119" r="1.8" fill="#ffffff" opacity="0.4"/>
+</svg>
