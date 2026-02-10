@@ -49,7 +49,7 @@ void main() async {
   // Inicializar RevenueCat
   await RevenueCatService().initialize();
 
-  // Configurar usuario si ya está autenticado
+  // Configurar usuario si ya está autenticado/
   final currentUser = Supabase.instance.client.auth.currentUser;
   if (currentUser != null) {
     AnalyticsService.instance.setUser(currentUser.id, email: currentUser.email);

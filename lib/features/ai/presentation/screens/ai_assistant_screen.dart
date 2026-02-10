@@ -8,8 +8,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/kino_mascot.dart';
 import '../../../library/presentation/providers/library_providers.dart';
 import '../../../subscription/subscription.dart';
+import '../../../subscription/presentation/widgets/smart_paywall_modal.dart';
 import '../providers/ai_chat_provider.dart';
 
 /// Pantalla del Asistente IA
@@ -23,6 +25,7 @@ class AiAssistantScreen extends ConsumerStatefulWidget {
 class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
+  bool _showWelcomeScreen = true;
 
   @override
   void dispose() {
@@ -110,6 +113,17 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
     ref.listen(aiChatProvider, (prev, next) {
       if (prev?.messages.length != next.messages.length) {
         _scrollToBottom();
+
+        // Smart paywall: cuando la IA responde por primera vez
+        if (next.messages.isNotEmpty &&
+            next.messages.last.role == ChatRole.assistant &&
+            !next.isLoading) {
+          SmartPaywallModal.maybeShow(
+            context,
+            ref,
+            trigger: SmartPaywallTriggers.firstAiChat,
+          );
+        }
       }
     });
 
@@ -121,49 +135,211 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
             // Header
             _buildHeader(),
 
-            // Chat content
-            Expanded(
-              child: state.isLoadingHistory
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        color: colors.accent,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : ListView.builder(
-                controller: _scrollController,
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  top: 12,
-                  bottom: 16 + mediaQuery.padding.bottom,
+            if (_showWelcomeScreen)
+              // Welcome view
+              Expanded(child: _buildWelcomeView())
+            else ...[
+              // Chat content
+              Expanded(
+                child: state.isLoadingHistory
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: colors.accent,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : ListView.builder(
+                  controller: _scrollController,
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 12,
+                    bottom: 16 + mediaQuery.padding.bottom,
+                  ),
+                  itemCount: state.messages.length + (state.isLoading ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (state.isLoading && index == state.messages.length) {
+                      return const _TypingIndicator();
+                    }
+
+                    final message = state.messages[index];
+                    if (message.role == ChatRole.user) {
+                      return _UserBubble(text: message.text);
+                    }
+
+                    return _AssistantMessage(
+                      message: message,
+                      onQuickReply: _sendQuickReply,
+                      onOpenDetail: _navigateToDetail,
+                      onAddToList: _addToList,
+                    );
+                  },
                 ),
-                itemCount: state.messages.length + (state.isLoading ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (state.isLoading && index == state.messages.length) {
-                    return const _TypingIndicator();
-                  }
-
-                  final message = state.messages[index];
-                  if (message.role == ChatRole.user) {
-                    return _UserBubble(text: message.text);
-                  }
-
-                  return _AssistantMessage(
-                    message: message,
-                    onQuickReply: _sendQuickReply,
-                    onOpenDetail: _navigateToDetail,
-                    onAddToList: _addToList,
-                  );
-                },
               ),
-            ),
 
-            // Input
-            _buildInput(state.isLoading),
+              // Input
+              _buildInput(state.isLoading),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildWelcomeView() {
+    final colors = context.colors;
+    final l10n = AppLocalizations.of(context);
+
+    return Stack(
+      children: [
+        // Subtle radial glow behind mascot
+        Positioned.fill(
+          child: Center(
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    colors.accent.withValues(alpha: 0.08),
+                    colors.accent.withValues(alpha: 0.02),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Content
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            children: [
+              const Spacer(flex: 2),
+
+              // Kino mascot
+              const KinoMascot(size: 120, mood: KinoMood.greeting),
+              const SizedBox(height: 28),
+
+              // Title: "Hola, soy Kino."
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: l10n.aiWelcomeHello,
+                      style: AppTypography.h2.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Kino.',
+                      style: AppTypography.h2.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colors.accent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Subtitle
+              Text(
+                l10n.aiWelcomeGreeting,
+                textAlign: TextAlign.center,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: colors.textTertiary,
+                  height: 1.5,
+                ),
+              ),
+
+              const Spacer(flex: 3),
+
+              // Buttons side by side
+              Row(
+                children: [
+                  // Ver historial (outlined)
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() => _showWelcomeScreen = false);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: colors.accent),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              CupertinoIcons.clock,
+                              color: colors.accent,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              l10n.aiViewHistory,
+                              style: AppTypography.labelMedium.copyWith(
+                                color: colors.accent,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Nuevo chat (filled accent)
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(aiChatProvider.notifier).startNewThread();
+                        setState(() => _showWelcomeScreen = false);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: colors.accent,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              CupertinoIcons.chat_bubble_fill,
+                              color: colors.textOnAccent,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              l10n.aiNewChat,
+                              style: AppTypography.labelMedium.copyWith(
+                                color: colors.textOnAccent,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -183,20 +359,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
       ),
       child: Row(
         children: [
-          // Sparkles icon
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: colors.accent.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              CupertinoIcons.sparkles,
-              color: colors.accent,
-              size: 18,
-            ),
-          ),
+          // Kino avatar
+          const KinoAvatar(size: 36),
           const SizedBox(width: 12),
           // Title
           Expanded(
@@ -208,6 +372,32 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
               ),
             ),
           ),
+          // New conversation button
+          if (!_showWelcomeScreen) ...[
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() => _showWelcomeScreen = true);
+              },
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.accent.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: colors.accent.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Icon(
+                  CupertinoIcons.square_pencil,
+                  color: colors.accent,
+                  size: 17,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+          ],
           // Usage counter / Pro badge
           AIUsageCounter(
             remaining: usage.remaining,
@@ -310,20 +500,8 @@ class _TypingIndicator extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar del asistente
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: colors.accent.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              CupertinoIcons.sparkles,
-              color: colors.accent,
-              size: 16,
-            ),
-          ),
+          // Avatar del asistente (Kino)
+          const KinoAvatar(size: 32),
           const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -456,23 +634,11 @@ class _AssistantMessage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header con avatar
+          // Header con avatar Kino
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: colors.accent.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  CupertinoIcons.sparkles,
-                  color: colors.accent,
-                  size: 16,
-                ),
-              ),
+              const KinoAvatar(size: 32),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

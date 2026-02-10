@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/services.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/kino_mascot.dart';
 import '../../data/mock_profile_data.dart';
 
 /// Card de Kineon Pro con pricing y features
@@ -40,107 +42,139 @@ class _KineonProCardState extends State<KineonProCard> {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colors.surface,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.surface,
+            colors.accent.withValues(alpha: 0.04),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.surfaceBorder),
+        border: Border.all(
+          color: colors.accent.withValues(alpha: 0.15),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.strings.profileKineonPro,
-                style: AppTypography.h4.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colors.textPrimary,
-                ),
-              ),
-              // Premium badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: colors.accent.withValues(alpha: 0.3),
+          // Header con Kino
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Row(
+              children: [
+                const KinoMascot(size: 44, mood: KinoMood.excited),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.strings.profileKineonPro,
+                        style: AppTypography.h4.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.strings.profileProSubtitle,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Text(
-                  'PREMIUM',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: colors.accent,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.gradientPrimary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'PRO',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: colors.textOnAccent,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 4),
-
-          // Subtitle
-          Text(
-            l10n.strings.profileProSubtitle,
-            style: AppTypography.bodySmall.copyWith(
-              color: colors.textSecondary,
+              ],
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // Billing period toggle
-          _BillingPeriodToggle(
-            selectedPeriod: _selectedPeriod,
-            annualDiscount: widget.plan.annualDiscount,
-            onPeriodChanged: (period) {
-              HapticFeedback.selectionClick();
-              setState(() => _selectedPeriod = period);
-            },
-          ),
-
-          const SizedBox(height: 20),
-
-          // Features list (localized)
-          _LocalizedFeatureRow(
-            icon: CupertinoIcons.sparkles,
-            title: l10n.strings.profileFeatureUnlimitedAI,
-          ),
-          _LocalizedFeatureRow(
-            icon: CupertinoIcons.chat_bubble_2,
-            title: l10n.strings.profileFeatureUnlimitedChat,
-          ),
-          _LocalizedFeatureRow(
-            icon: CupertinoIcons.list_bullet,
-            title: l10n.strings.profileFeatureUnlimitedLists,
-          ),
-          _LocalizedFeatureRow(
-            icon: CupertinoIcons.checkmark_seal,
-            title: l10n.strings.profileFeatureEarlyAccess,
-          ),
-
-          const SizedBox(height: 20),
-
-          // CTA Button
-          if (widget.isUserPro)
-            _ManageSubscriptionButton(onTap: widget.onManageSubscription)
-          else
-            _UpgradeButton(
-              price: _currentPrice,
-              period: _selectedPeriod,
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                widget.onUpgrade?.call();
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _BillingPeriodToggle(
+              selectedPeriod: _selectedPeriod,
+              annualDiscount: widget.plan.annualDiscount,
+              onPeriodChanged: (period) {
+                HapticFeedback.selectionClick();
+                setState(() => _selectedPeriod = period);
               },
             ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Features list mejorada
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                _LocalizedFeatureRow(
+                  icon: CupertinoIcons.sparkles,
+                  title: l10n.strings.profileFeatureUnlimitedAI,
+                ),
+                _LocalizedFeatureRow(
+                  icon: CupertinoIcons.chat_bubble_2,
+                  title: l10n.strings.profileFeatureUnlimitedChat,
+                ),
+                _LocalizedFeatureRow(
+                  icon: Icons.auto_stories_rounded,
+                  title: l10n.strings.profileFeatureStories,
+                ),
+                _LocalizedFeatureRow(
+                  icon: Icons.collections_bookmark_rounded,
+                  title: l10n.strings.profileFeatureSmartCollections,
+                ),
+                _LocalizedFeatureRow(
+                  icon: CupertinoIcons.list_bullet,
+                  title: l10n.strings.profileFeatureUnlimitedLists,
+                ),
+                _LocalizedFeatureRow(
+                  icon: CupertinoIcons.checkmark_seal,
+                  title: l10n.strings.profileFeatureEarlyAccess,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // CTA Button
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: widget.isUserPro
+                ? _ManageSubscriptionButton(onTap: widget.onManageSubscription)
+                : _UpgradeButton(
+                    price: _currentPrice,
+                    period: _selectedPeriod,
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      widget.onUpgrade?.call();
+                    },
+                  ),
+          ),
         ],
       ),
     );
@@ -246,66 +280,6 @@ class _BillingPeriodToggle extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Row de feature
-class _FeatureRow extends StatelessWidget {
-  final ProFeature feature;
-
-  const _FeatureRow({required this.feature});
-
-  IconData get _icon {
-    switch (feature.iconName) {
-      case 'sparkles':
-        return CupertinoIcons.sparkles;
-      case 'cloud_download':
-        return CupertinoIcons.cloud_download;
-      case 'checkmark_seal':
-        return CupertinoIcons.checkmark_seal;
-      case 'list_bullet_rectangle':
-        return CupertinoIcons.list_bullet;
-      case 'calendar':
-        return CupertinoIcons.calendar;
-      case 'tv':
-        return CupertinoIcons.tv;
-      default:
-        return CupertinoIcons.star;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: colors.accent.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              _icon,
-              color: colors.accent,
-              size: 14,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              feature.title,
-              style: AppTypography.bodyMedium.copyWith(
-                color: colors.textPrimary,
               ),
             ),
           ),

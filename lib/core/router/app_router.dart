@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../navigation/route_observer.dart';
 import '../network/connectivity_provider.dart';
+import '../widgets/kino_mascot.dart';
 import '../widgets/offline_banner.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -22,6 +24,8 @@ import '../../features/movie_details/presentation/screens/movie_detail_mock_scre
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/profile/presentation/screens/profile_mock_screen.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
+import '../../features/home/presentation/screens/smart_collection_detail_screen.dart';
+import '../../features/stories/presentation/screens/stories_screen.dart';
 import '../../features/subscription/presentation/screens/subscription_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
@@ -43,6 +47,7 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String details = '/details/:type/:id';
   static const String mediaList = '/list/:type';
+  static const String stories = '/stories';
 
   // Rutas públicas (no requieren autenticación)
   static const List<String> publicRoutes = [
@@ -324,6 +329,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      // Ruta para Smart Collection detail
+      GoRoute(
+        path: '/collection/:slug',
+        name: 'collection-detail',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final slug = state.pathParameters['slug']!;
+          return MaterialPage(
+            child: SmartCollectionDetailScreen(slug: slug),
+          );
+        },
+      ),
+
+      // Ruta para Stories (fullscreen modal)
+      GoRoute(
+        path: AppRoutes.stories,
+        name: 'stories',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          return const MaterialPage(
+            fullscreenDialog: true,
+            child: StoriesScreen(),
+          );
+        },
+      ),
+
       // Ruta para suscripción Pro
       GoRoute(
         path: '/profile/subscription',
@@ -521,13 +552,16 @@ class KineonBottomBar extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// NAV ITEMS — tabs normales con más presencia visual (#4)
+// ─────────────────────────────────────────────────────────────
+
 class _KineonNavItem extends StatelessWidget {
   final IconData icon;
   final IconData activeIcon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-  final bool isAI;
 
   const _KineonNavItem({
     required this.icon,
@@ -535,75 +569,63 @@ class _KineonNavItem extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
-    this.isAI = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-
-    // Color del icono seleccionado
-    final selectedColor = isAI
-        ? colors.accentPurple
-        : colors.accent;
-
-    final color = isSelected ? selectedColor : colors.navIconInactive;
+    final color = isSelected ? colors.accent : colors.navIconInactive;
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icono con efecto glow cuando está seleccionado
-            AnimatedContainer(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(6),
+            decoration: isSelected
+                ? BoxDecoration(
+                    color: colors.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  )
+                : null,
+            child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(6),
-              decoration: isSelected
-                  ? BoxDecoration(
-                      color: selectedColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    )
-                  : null,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  isSelected ? activeIcon : icon,
-                  key: ValueKey('${label}_$isSelected'),
-                  color: color,
-                  size: isAI && isSelected ? 24 : 20,
-                ),
-              ),
-            ),
-            const SizedBox(height: 2),
-            // Label
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style: TextStyle(
+              child: Icon(
+                isSelected ? activeIcon : icon,
+                key: ValueKey('${label}_$isSelected'),
                 color: color,
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                letterSpacing: 0.1,
-              ),
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                size: 22, // +2px vs antes (20) — más presencia (#4)
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 2),
+          AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            style: TextStyle(
+              color: isSelected
+                  ? colors.accent
+                  : colors.navIconInactive.withValues(alpha: 0.85), // más contraste (#4)
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              letterSpacing: 0.1,
+            ),
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Botón especial de IA con círculo cyan
-class _KineonAINavItem extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────
+// AI NAV ITEM — Kino con bounce, haptic y glow contextual
+// ─────────────────────────────────────────────────────────────
+
+class _KineonAINavItem extends StatefulWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
@@ -614,56 +636,101 @@ class _KineonAINavItem extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _cyanColor = Color(0xFF5EEAD4); // Cyan/Teal - mismo en ambos temas
+  @override
+  State<_KineonAINavItem> createState() => _KineonAINavItemState();
+}
+
+class _KineonAINavItemState extends State<_KineonAINavItem>
+    with SingleTickerProviderStateMixin {
+  static const _cyanColor = Color(0xFF5EEAD4);
+
+  // Bounce animation (#5)
+  late final AnimationController _bounceController;
+  late final Animation<double> _bounceScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _bounceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+    _bounceScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.88), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 0.88, end: 1.04), weight: 35),
+      TweenSequenceItem(tween: Tween(begin: 1.04, end: 1.0), weight: 15),
+    ]).animate(CurvedAnimation(
+      parent: _bounceController,
+      curve: Curves.easeOutCubic,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _bounceController.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    HapticFeedback.lightImpact(); // haptic feedback (#5)
+    _bounceController.forward(from: 0); // bounce (#5)
+    widget.onTap();
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: _handleTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        height: 72, // Mismo alto que el bar
+        height: 72,
         child: Stack(
           alignment: Alignment.center,
           clipBehavior: Clip.none,
           children: [
-            // Círculo cyan - posicionado para sobresalir
+            // Kino circle — 46px (#1: reducido ~12% desde 52)
             Positioned(
-              top: -6,
-              child: Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _cyanColor,
-                  boxShadow: [
-                    BoxShadow(
-                      color: _cyanColor.withValues(alpha: 0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+              top: -2, // menos flotante (#2)
+              child: AnimatedBuilder(
+                animation: _bounceScale,
+                builder: (context, child) => Transform.scale(
+                  scale: _bounceScale.value,
+                  child: child,
                 ),
-                child: const Icon(
-                  Icons.auto_awesome,
-                  color: Colors.black,
-                  size: 26,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _cyanColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _cyanColor.withValues(
+                          alpha: widget.isSelected ? 0.35 : 0.18, // glow contextual (#3)
+                        ),
+                        blurRadius: widget.isSelected ? 10 : 6, // shadow reducido 25% (#2)
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: KinoIcon(size: 28, color: Colors.white),
+                  ),
                 ),
               ),
             ),
-            // Label en la parte inferior
+            // Label — Kino como nombre
             Positioned(
               bottom: 8,
               child: Text(
-                label,
+                widget.label,
                 style: TextStyle(
-                  color: isSelected
-                      ? _cyanColor
-                      : colors.navIconInactive,
+                  color: widget.isSelected ? _cyanColor : colors.navIconInactive,
                   fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w400,
                   letterSpacing: 0.1,
                 ),
               ),

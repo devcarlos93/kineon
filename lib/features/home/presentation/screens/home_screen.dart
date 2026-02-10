@@ -16,11 +16,17 @@ import '../../../library/presentation/providers/library_providers.dart';
 import '../../domain/entities/media_item.dart';
 import '../providers/ai_picks_provider.dart';
 import '../providers/home_provider.dart';
+import '../providers/smart_collections_provider.dart';
 import '../widgets/ai_picks_section.dart';
 import '../widgets/home_header.dart';
 import '../widgets/horizontal_carousel.dart';
 import '../widgets/quick_preferences_sheet.dart';
 import '../widgets/skeleton_card.dart';
+import '../widgets/smart_collections_section.dart';
+import '../../../stories/presentation/widgets/stories_entry_card.dart';
+import '../../../subscription/presentation/widgets/usage_progress_bar.dart';
+import '../../../subscription/presentation/widgets/smart_paywall_modal.dart';
+import '../../../../core/widgets/kino_mascot.dart';
 import 'media_list_screen.dart';
 
 /// Pantalla principal Home de Kineon
@@ -73,24 +79,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
   }
 
   Future<void> _loadData() async {
-    // Cargar todo en paralelo para mayor velocidad
-    final prefs = SharedPreferences.getInstance();
-
-    // Iniciar cargas en paralelo (no await individual)
-    ref.read(homeProvider.notifier).loadHomeData();
+    // homeProvider, aiPicksProvider y smartCollectionsProvider ahora auto-cargan
+    // en su constructor, así que solo necesitamos cargar lo que no auto-carga.
     ref.read(userPreferencesProvider.notifier).loadPreferences();
 
-    // Verificar preferencias nuevas
-    final prefsInstance = await prefs;
+    // Verificar si hay preferencias nuevas del onboarding para forzar refresh de AI picks
+    final prefsInstance = await SharedPreferences.getInstance();
     final hasNewPreferences = prefsInstance.getBool('new_preferences_saved') ?? false;
-
-    // Cargar AI picks con estrategia cache-first
-    // Pedimos 5 para que después de filtrar ocultos, queden al menos 3
     if (hasNewPreferences) {
       prefsInstance.remove('new_preferences_saved');
       ref.read(aiPicksProvider.notifier).refresh(pickCount: 5);
-    } else {
-      ref.read(aiPicksProvider.notifier).loadPicks(pickCount: 5);
     }
 
     // Actualizar notificaciones en background
@@ -106,6 +104,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
       ref.read(homeProvider.notifier).refresh(),
       aiRefreshFuture,
       ref.read(userPreferencesProvider.notifier).refresh(),
+      ref.read(smartCollectionsProvider.notifier).refresh(),
     ]);
 
     // Verificar si AI picks fue rate limited
@@ -173,6 +172,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
   void _onMediaTap(MediaItem item) {
     final type = item.contentType == ContentType.movie ? 'movie' : 'tv';
     context.push('/details/$type/${item.id}');
+  }
+
+  /// Tap en un AI Pick: navega + trigger smart paywall
+  void _onAiPickTap(MediaItem item) {
+    _onMediaTap(item);
+    SmartPaywallModal.maybeShow(
+      context,
+      ref,
+      trigger: SmartPaywallTriggers.firstAiPick,
+    );
   }
 
   /// Añade un item específico a Mi Lista
@@ -329,7 +338,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
               ).animate().fadeIn(duration: 400.ms),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // ══════════════════════════════════════════════════════
+            // USAGE PROGRESS BAR (Conversion strategy)
+            // ══════════════════════════════════════════════════════
+            SliverToBoxAdapter(
+              child: const UsageProgressBar()
+                  .animate().fadeIn(delay: 50.ms, duration: 400.ms),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
             // ══════════════════════════════════════════════════════
             // PARA TI HOY (Recomendaciones IA + Acciones)
@@ -344,7 +363,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
                 personalizationType: aiPicks.personalizationType,
                 hasPreferences: userPrefs.hasPreferences,
                 mediaStates: mediaStates,
-                onItemTap: _onMediaTap,
+                onItemTap: _onAiPickTap,
                 onAddToList: _handleAddToListItem,
                 onNotInterested: _handleNotInterestedItem,
                 onRefresh: _refresh,
@@ -352,7 +371,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
               ).animate().fadeIn(delay: 100.ms, duration: 400.ms),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+            // ══════════════════════════════════════════════════════
+            // STORIES AI ENTRY CARD
+            // ══════════════════════════════════════════════════════
+            SliverToBoxAdapter(
+              child: const StoriesEntryCard()
+                  .animate()
+                  .fadeIn(delay: 200.ms, duration: 400.ms),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+            // ══════════════════════════════════════════════════════
+            // SMART COLLECTIONS
+            // ══════════════════════════════════════════════════════
+            SliverToBoxAdapter(
+              child: const SmartCollectionsSection()
+                  .animate()
+                  .fadeIn(delay: 250.ms, duration: 400.ms),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
             // ══════════════════════════════════════════════════════
             // TENDENCIAS PELICULAS
@@ -493,6 +534,7 @@ class HomeErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context);
 
     return Center(
       child: Padding(
@@ -500,30 +542,16 @@ class HomeErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icono con gradiente
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colors.accent.withValues(alpha: 0.2),
-                    colors.accentPurple.withValues(alpha: 0.2),
-                  ],
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.cloud_off_rounded,
-                size: 40,
-                color: colors.textSecondary,
-              ),
+            // Kino mascot
+            Opacity(
+              opacity: 0.7,
+              child: const KinoMascot(size: 100),
             ),
 
             const SizedBox(height: 24),
 
             Text(
-              'Algo salio mal',
+              l10n.kinoErrorTitle,
               style: AppTypography.h2.copyWith(color: colors.textPrimary),
             ),
 
@@ -568,7 +596,7 @@ class HomeErrorState extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Reintentar',
+                      l10n.kinoRetry,
                       style: AppTypography.labelLarge.copyWith(
                         color: colors.textOnAccent,
                         fontWeight: FontWeight.w600,

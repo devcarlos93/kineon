@@ -15,7 +15,10 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../home/domain/entities/media_item.dart';
 import '../../../library/presentation/providers/library_providers.dart';
 import '../../../subscription/subscription.dart';
+import '../../../subscription/presentation/widgets/smart_paywall_modal.dart';
+import '../../../../core/widgets/kino_mascot.dart';
 import '../providers/intelligent_search_provider.dart';
+import '../providers/streaming_providers_provider.dart';
 
 /// Pantalla de Intelligent Discovery
 class IntelligentDiscoveryScreen extends ConsumerStatefulWidget {
@@ -31,6 +34,7 @@ class _IntelligentDiscoveryScreenState
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   String _currentSuggestion = '';
+  bool _suggestionsInitialized = false;
 
   // Speech to text
   final stt.SpeechToText _speech = stt.SpeechToText();
@@ -40,9 +44,17 @@ class _IntelligentDiscoveryScreenState
   @override
   void initState() {
     super.initState();
-    _rotateSuggestion();
     _initSpeech();
     _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_suggestionsInitialized) {
+      _rotateSuggestion();
+      _suggestionsInitialized = true;
+    }
   }
 
   void _onScroll() {
@@ -83,8 +95,9 @@ class _IntelligentDiscoveryScreenState
 
   void _rotateSuggestion() {
     final random = Random();
-    _currentSuggestion =
-        searchSuggestions[random.nextInt(searchSuggestions.length)];
+    final l10n = AppLocalizations.of(context);
+    final suggestions = l10n.strings.searchDiscoverySuggestions;
+    _currentSuggestion = suggestions[random.nextInt(suggestions.length)];
   }
 
   /// Búsqueda automática mientras escribe
@@ -157,6 +170,9 @@ class _IntelligentDiscoveryScreenState
     final state = ref.watch(intelligentSearchProvider);
     final mediaQuery = MediaQuery.of(context);
 
+    // Pre-cargar streaming providers para que estén listos al tocar el chip
+    ref.watch(streamingProvidersProvider);
+
     // Escuchar cuando se alcanza el límite y mostrar paywall
     ref.listen<IntelligentSearchState>(intelligentSearchProvider, (prev, next) {
       if (next.limitReached && !(prev?.limitReached ?? false)) {
@@ -164,6 +180,17 @@ class _IntelligentDiscoveryScreenState
           context,
           endpoint: AIEndpoints.search,
           onUpgrade: () => context.push('/profile/subscription'),
+        );
+      }
+
+      // Smart paywall: cuando resultados aparecen por primera vez
+      final hadResults = (prev?.results.isNotEmpty ?? false);
+      final hasResults = next.results.isNotEmpty && !next.isLoadingResults;
+      if (!hadResults && hasResults) {
+        SmartPaywallModal.maybeShow(
+          context,
+          ref,
+          trigger: SmartPaywallTriggers.firstSearch,
         );
       }
     });
@@ -186,8 +213,8 @@ class _IntelligentDiscoveryScreenState
               // Hint text
               if (state.query.isEmpty) _buildHintText(),
 
-              // Intent summary (cuando hay plan)
-              if (state.plan != null && !state.isLoadingPlan)
+              // Intent summary (solo cuando hay query activa con plan)
+              if (state.query.isNotEmpty && state.plan != null && !state.isLoadingPlan)
                 _buildIntentSummary(state.plan!),
 
               // Filter Chips
@@ -239,7 +266,7 @@ class _IntelligentDiscoveryScreenState
               ),
               const SizedBox(height: 2),
               Text(
-                'Discovery',
+                AppLocalizations.of(context).strings.searchDiscovery,
                 style: AppTypography.h2.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -264,12 +291,8 @@ class _IntelligentDiscoveryScreenState
         child: Row(
           children: [
             const SizedBox(width: 16),
-            // Sparkles icon
-            Icon(
-              CupertinoIcons.sparkles,
-              color: colors.accent,
-              size: 20,
-            ),
+            // Kino icon
+            KinoIcon(size: 20, mood: KinoMood.happy, color: colors.accent),
             const SizedBox(width: 12),
             // Text field
             Expanded(
@@ -286,7 +309,9 @@ class _IntelligentDiscoveryScreenState
                 ),
                 cursorColor: colors.accent,
                 decoration: InputDecoration(
-                  hintText: _isListening ? 'Escuchando...' : 'Algo como Interstellar...',
+                  hintText: _isListening
+                      ? AppLocalizations.of(context).strings.searchDiscoveryListening
+                      : AppLocalizations.of(context).strings.searchDiscoveryPlaceholder,
                   hintStyle: TextStyle(
                     fontFamily: AppTypography.bodyMedium.fontFamily,
                     fontSize: 14,
@@ -353,7 +378,7 @@ class _IntelligentDiscoveryScreenState
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
       child: Text(
-        'Try "$_currentSuggestion"',
+        '${AppLocalizations.of(context).strings.searchDiscoveryTryPrefix} "$_currentSuggestion"',
         style: AppTypography.caption.copyWith(
           color: colors.textTertiary,
           fontStyle: FontStyle.italic,
@@ -391,56 +416,287 @@ class _IntelligentDiscoveryScreenState
 
   Widget _buildFilterChips(IntelligentSearchState state) {
     final l10n = AppLocalizations.of(context);
+    final genreMap = l10n.strings.genreBadgeNames;
+
+    // Solo mostrar labels del plan de IA cuando hay query activa
+    final showPlanLabels = state.query.isNotEmpty && state.plan != null;
+
+    // Determinar label de género
+    String genreLabel;
+    bool genreIsUserSet = state.selectedGenreIds != null;
+    bool genreActive;
+    if (state.selectedGenreIds != null && state.selectedGenreIds!.isNotEmpty) {
+      genreLabel = genreMap[state.selectedGenreIds!.first] ?? l10n.strings.searchFilterGenre;
+      genreActive = true;
+    } else if (showPlanLabels) {
+      genreLabel = state.plan!.ui.genreLabel;
+      genreActive = state.plan!.discover.withGenres.isNotEmpty;
+    } else {
+      genreLabel = l10n.strings.searchFilterGenre;
+      genreActive = false;
+    }
+
+    // Determinar label de mood
+    String moodLabel;
+    bool moodIsUserSet = state.selectedMood != null;
+    bool moodActive;
+    if (state.selectedMood != null) {
+      moodLabel = state.selectedMood!;
+      moodActive = true;
+    } else if (showPlanLabels && state.plan!.ui.moodLabel != null) {
+      moodLabel = state.plan!.ui.moodLabel!;
+      moodActive = true;
+    } else {
+      moodLabel = l10n.strings.searchFilterMood;
+      moodActive = false;
+    }
+
+    // Runtime
+    bool runtimeIsUserSet = state.selectedRuntime != null;
+    String runtimeLabel;
+    bool runtimeActive;
+    if (runtimeIsUserSet) {
+      runtimeLabel = '< ${state.selectedRuntime}m';
+      runtimeActive = true;
+    } else if (showPlanLabels && state.plan!.ui.runtimeLabel != null) {
+      runtimeLabel = state.plan!.ui.runtimeLabel!;
+      runtimeActive = true;
+    } else {
+      runtimeLabel = l10n.strings.searchFilterRuntime;
+      runtimeActive = false;
+    }
+
+    // Year
+    bool yearIsUserSet = state.selectedYear != null;
+    String yearLabel;
+    bool yearActive;
+    if (yearIsUserSet) {
+      yearLabel = state.selectedYear!;
+      yearActive = true;
+    } else if (showPlanLabels && state.plan!.ui.yearLabel != null) {
+      yearLabel = state.plan!.ui.yearLabel!;
+      yearActive = true;
+    } else {
+      yearLabel = l10n.strings.searchFilterYear;
+      yearActive = false;
+    }
+
+    // Streaming platform
+    bool streamingIsUserSet = state.selectedWatchProviders != null && state.selectedWatchProviders!.isNotEmpty;
+    String streamingLabel;
+    bool streamingActive;
+    if (streamingIsUserSet) {
+      final count = state.selectedWatchProviders!.length;
+      if (count == 1) {
+        // Show the provider name if we can resolve it
+        final providers = ref.watch(streamingProvidersProvider).valueOrNull ?? [];
+        final match = providers.where((p) => p.providerId == state.selectedWatchProviders!.first);
+        streamingLabel = match.isNotEmpty ? match.first.providerName : l10n.strings.searchFilterStreaming;
+      } else {
+        streamingLabel = l10n.strings.searchFilterStreamingCount(count);
+      }
+      streamingActive = true;
+    } else {
+      streamingLabel = l10n.strings.searchFilterStreaming;
+      streamingActive = false;
+    }
+
     return SizedBox(
       height: 48,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
-          // Genre chip
           _FilterChip(
-            label: state.plan?.ui.genreLabel ?? l10n.strings.searchFilterGenre,
-            isActive: state.plan?.discover.withGenres.isNotEmpty ?? false,
-            onTap: () {
-              // TODO: Show genre picker
-              HapticFeedback.lightImpact();
-            },
+            label: genreLabel,
+            isActive: genreActive,
+            isUserOverride: genreIsUserSet,
+            onTap: () => _showGenrePicker(state),
+            onClear: genreIsUserSet ? () {
+              ref.read(intelligentSearchProvider.notifier).setGenreFilter(null);
+            } : null,
           ),
-          const SizedBox(width: 12),
-          // Mood chip
+          const SizedBox(width: 10),
           _FilterChip(
-            label: state.plan?.ui.moodLabel ?? l10n.strings.searchFilterMood,
-            isActive: state.plan?.ui.moodLabel != null,
-            onTap: () {
-              HapticFeedback.lightImpact();
-            },
+            label: streamingLabel,
+            isActive: streamingActive,
+            isUserOverride: streamingIsUserSet,
+            onTap: () => _showStreamingPicker(state),
+            onClear: streamingIsUserSet ? () {
+              ref.read(intelligentSearchProvider.notifier).setWatchProviderFilter(null);
+            } : null,
           ),
-          const SizedBox(width: 12),
-          // Runtime chip
+          const SizedBox(width: 10),
           _FilterChip(
-            label: state.plan?.ui.runtimeLabel ?? l10n.strings.searchFilterRuntime,
-            isActive: state.plan?.ui.runtimeLabel != null,
-            onTap: () {
-              HapticFeedback.lightImpact();
-            },
+            label: moodLabel,
+            isActive: moodActive,
+            isUserOverride: moodIsUserSet,
+            onTap: () => _showMoodPicker(state),
+            onClear: moodIsUserSet ? () {
+              ref.read(intelligentSearchProvider.notifier).setMoodFilter(null);
+            } : null,
           ),
-          const SizedBox(width: 12),
-          // Year chip
+          const SizedBox(width: 10),
           _FilterChip(
-            label: state.plan?.ui.yearLabel ?? l10n.strings.searchFilterYear,
-            isActive: state.plan?.ui.yearLabel != null,
-            onTap: () {
-              HapticFeedback.lightImpact();
-            },
+            label: runtimeLabel,
+            isActive: runtimeActive,
+            isUserOverride: runtimeIsUserSet,
+            onTap: () => _showRuntimePicker(state),
+            onClear: runtimeIsUserSet ? () {
+              ref.read(intelligentSearchProvider.notifier).setRuntimeFilter(null);
+            } : null,
+          ),
+          const SizedBox(width: 10),
+          _FilterChip(
+            label: yearLabel,
+            isActive: yearActive,
+            isUserOverride: yearIsUserSet,
+            onTap: () => _showYearPicker(state),
+            onClear: yearIsUserSet ? () {
+              ref.read(intelligentSearchProvider.notifier).setYearFilter(null);
+            } : null,
           ),
         ],
       ),
     );
   }
 
+  // ── Filter pickers ──────────────────────────────────────────────────────
+
+  void _showGenrePicker(IntelligentSearchState state) {
+    HapticFeedback.lightImpact();
+    final l10n = AppLocalizations.of(context);
+    final genreMap = l10n.strings.genreBadgeNames;
+
+    // Géneros principales de películas (excluir duplicados de TV)
+    const mainGenreIds = [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
+    final genreNames = mainGenreIds
+        .where((id) => genreMap.containsKey(id))
+        .map((id) => genreMap[id]!)
+        .toList();
+
+    final selectedName = state.selectedGenreIds != null && state.selectedGenreIds!.isNotEmpty
+        ? genreMap[state.selectedGenreIds!.first]
+        : null;
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => _FilterModal(
+        title: l10n.strings.searchFilterGenre,
+        options: genreNames,
+        selectedValue: selectedName,
+        onSelect: (value) {
+          if (value != null) {
+            final genreId = genreMap.entries.firstWhere((e) => e.value == value).key;
+            ref.read(intelligentSearchProvider.notifier).setGenreFilter([genreId]);
+          }
+          Navigator.pop(ctx);
+        },
+        onClear: () {
+          ref.read(intelligentSearchProvider.notifier).setGenreFilter(null);
+          Navigator.pop(ctx);
+        },
+      ),
+    );
+  }
+
+  void _showMoodPicker(IntelligentSearchState state) {
+    HapticFeedback.lightImpact();
+    final l10n = AppLocalizations.of(context);
+    final moods = l10n.strings.searchFilterMoodOptions;
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => _FilterModal(
+        title: l10n.strings.searchFilterMood,
+        options: moods,
+        selectedValue: state.selectedMood,
+        onSelect: (value) {
+          ref.read(intelligentSearchProvider.notifier).setMoodFilter(value);
+          Navigator.pop(ctx);
+        },
+        onClear: () {
+          ref.read(intelligentSearchProvider.notifier).setMoodFilter(null);
+          Navigator.pop(ctx);
+        },
+      ),
+    );
+  }
+
+  void _showRuntimePicker(IntelligentSearchState state) {
+    HapticFeedback.lightImpact();
+    final l10n = AppLocalizations.of(context);
+    final runtimes = ['60', '90', '120', '150', '180'];
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => _FilterModal(
+        title: l10n.strings.searchFilterRuntime,
+        options: runtimes.map((r) => '< $r min').toList(),
+        selectedValue: state.selectedRuntime != null ? '< ${state.selectedRuntime} min' : null,
+        onSelect: (value) {
+          if (value != null) {
+            final minutes = value.replaceAll(RegExp(r'[^0-9]'), '');
+            ref.read(intelligentSearchProvider.notifier).setRuntimeFilter(minutes);
+          }
+          Navigator.pop(ctx);
+        },
+        onClear: () {
+          ref.read(intelligentSearchProvider.notifier).setRuntimeFilter(null);
+          Navigator.pop(ctx);
+        },
+      ),
+    );
+  }
+
+  void _showYearPicker(IntelligentSearchState state) {
+    HapticFeedback.lightImpact();
+    final l10n = AppLocalizations.of(context);
+    final currentYear = DateTime.now().year;
+    final years = List.generate(50, (i) => (currentYear - i).toString());
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => _FilterModal(
+        title: l10n.strings.searchFilterYear,
+        options: years,
+        selectedValue: state.selectedYear,
+        onSelect: (value) {
+          ref.read(intelligentSearchProvider.notifier).setYearFilter(value);
+          Navigator.pop(ctx);
+        },
+        onClear: () {
+          ref.read(intelligentSearchProvider.notifier).setYearFilter(null);
+          Navigator.pop(ctx);
+        },
+      ),
+    );
+  }
+
+  void _showStreamingPicker(IntelligentSearchState state) {
+    HapticFeedback.lightImpact();
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => _StreamingPickerSheet(
+        selectedIds: state.selectedWatchProviders ?? [],
+        onApply: (ids) {
+          ref.read(intelligentSearchProvider.notifier).setWatchProviderFilter(
+            ids.isNotEmpty ? ids : null,
+          );
+          Navigator.pop(ctx);
+        },
+        onClear: () {
+          ref.read(intelligentSearchProvider.notifier).setWatchProviderFilter(null);
+          Navigator.pop(ctx);
+        },
+      ),
+    );
+  }
+
   Widget _buildContent(IntelligentSearchState state, MediaQueryData mediaQuery) {
-    // Empty state
-    if (state.query.isEmpty) {
+    // Empty state (no query AND no active filters)
+    if (state.query.isEmpty && !state.hasAnyFilter) {
       return _buildEmptyState();
     }
 
@@ -459,44 +715,32 @@ class _IntelligentDiscoveryScreenState
       return _buildResults(state, mediaQuery);
     }
 
-    // No results
-    return _buildNoResultsState();
+    // No results (only show if we actually searched)
+    if (state.query.isNotEmpty || state.hasAnyFilter) {
+      return _buildNoResultsState();
+    }
+
+    return _buildEmptyState();
   }
 
   Widget _buildEmptyState() {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colors.accent.withValues(alpha: 0.2),
-                    colors.accentPurple.withValues(alpha: 0.2),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Icon(
-                CupertinoIcons.sparkles,
-                color: colors.accent,
-                size: 36,
-              ),
-            ),
+            const KinoIcon(size: 64, mood: KinoMood.greeting),
             const SizedBox(height: 24),
             Text(
-              'Búsqueda Inteligente',
+              l10n.strings.searchDiscoveryEmptyTitle,
               style: AppTypography.h4.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
-              'Describe lo que quieres ver y nuestra IA encontrará las mejores opciones para ti',
+              l10n.strings.searchDiscoveryEmptySubtitle,
               style: AppTypography.bodyMedium.copyWith(
                 color: colors.textSecondary,
               ),
@@ -517,7 +761,7 @@ class _IntelligentDiscoveryScreenState
           CircularProgressIndicator(color: colors.accent),
           const SizedBox(height: 16),
           Text(
-            'Buscando contenido perfecto...',
+            AppLocalizations.of(context).strings.searchDiscoveryLoading,
             style: AppTypography.bodyMedium.copyWith(
               color: colors.textSecondary,
             ),
@@ -542,7 +786,7 @@ class _IntelligentDiscoveryScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              'Algo salió mal',
+              AppLocalizations.of(context).strings.searchDiscoveryErrorTitle,
               style: AppTypography.h4.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
@@ -574,12 +818,12 @@ class _IntelligentDiscoveryScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin resultados',
+              AppLocalizations.of(context).strings.searchDiscoveryNoResultsTitle,
               style: AppTypography.h4.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
-              'Intenta con otra descripción',
+              AppLocalizations.of(context).strings.searchDiscoveryNoResultsSubtitle,
               style: AppTypography.bodyMedium.copyWith(
                 color: colors.textSecondary,
               ),
@@ -602,7 +846,7 @@ class _IntelligentDiscoveryScreenState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'AI Recommended',
+                AppLocalizations.of(context).strings.searchDiscoveryAiRecommended,
                 style: AppTypography.h4.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -615,7 +859,7 @@ class _IntelligentDiscoveryScreenState
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '${state.plan!.matchPercent}% MATCH',
+                    '${state.plan!.matchPercent}% ${AppLocalizations.of(context).strings.searchDiscoveryMatch}',
                     style: AppTypography.labelSmall.copyWith(
                       color: colors.accent,
                       fontWeight: FontWeight.w700,
@@ -662,31 +906,53 @@ class _IntelligentDiscoveryScreenState
 // WIDGETS AUXILIARES
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Chip de filtro
+/// Chip de filtro con soporte para clear y diferenciación AI vs usuario
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool isActive;
+  final bool isUserOverride;
   final VoidCallback onTap;
+  final VoidCallback? onClear;
 
   const _FilterChip({
     required this.label,
     required this.isActive,
+    this.isUserOverride = false,
     required this.onTap,
+    this.onClear,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+
+    // Colores diferenciados: usuario = accent sólido, AI = accent sutil
+    final chipColor = isUserOverride
+        ? colors.accent.withValues(alpha: 0.25)
+        : isActive
+            ? colors.accent.withValues(alpha: 0.12)
+            : colors.surface;
+    final borderColor = isUserOverride
+        ? colors.accent.withValues(alpha: 0.6)
+        : isActive
+            ? colors.accent.withValues(alpha: 0.3)
+            : colors.surfaceBorder;
+    final textColor = isActive ? colors.accent : colors.textPrimary;
+
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.only(
+          left: 14,
+          right: onClear != null ? 8 : 14,
+          top: 10,
+          bottom: 10,
+        ),
         decoration: BoxDecoration(
-          color: isActive ? colors.accent.withValues(alpha: 0.15) : colors.surface,
+          color: chipColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isActive ? colors.accent : colors.surfaceBorder,
-          ),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -694,16 +960,38 @@ class _FilterChip extends StatelessWidget {
             Text(
               label,
               style: AppTypography.labelMedium.copyWith(
-                color: isActive ? colors.accent : colors.textPrimary,
+                color: textColor,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
-            const SizedBox(width: 6),
-            Icon(
-              CupertinoIcons.chevron_down,
-              size: 14,
-              color: isActive ? colors.accent : colors.textSecondary,
-            ),
+            if (onClear != null) ...[
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onClear!();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: colors.accent.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: 10,
+                    color: colors.accent,
+                  ),
+                ),
+              ),
+            ] else ...[
+              const SizedBox(width: 6),
+              Icon(
+                CupertinoIcons.chevron_down,
+                size: 14,
+                color: isActive ? colors.accent : colors.textSecondary,
+              ),
+            ],
           ],
         ),
       ),
@@ -729,7 +1017,7 @@ class _DiscoveryCard extends ConsumerWidget {
         : null;
 
     // Determinar género principal para el badge
-    final genreName = _getGenreName(item.genreIds.isNotEmpty ? item.genreIds.first : 0);
+    final genreName = _getGenreName(context, item.genreIds.isNotEmpty ? item.genreIds.first : 0);
 
     // Obtener estado de biblioteca para este item
     final mediaStateAsync = ref.watch(
@@ -914,29 +1202,8 @@ class _DiscoveryCard extends ConsumerWidget {
     );
   }
 
-  String _getGenreName(int genreId) {
-    const genreMap = {
-      28: 'ACTION',
-      12: 'ADVENTURE',
-      16: 'ANIMATION',
-      35: 'COMEDY',
-      80: 'CRIME',
-      99: 'DOCUMENTARY',
-      18: 'DRAMA',
-      10751: 'FAMILY',
-      14: 'FANTASY',
-      36: 'HISTORY',
-      27: 'HORROR',
-      10402: 'MUSIC',
-      9648: 'MYSTERY',
-      10749: 'ROMANCE',
-      878: 'SCI-FI',
-      53: 'THRILLER',
-      10752: 'WAR',
-      37: 'WESTERN',
-      10759: 'ACTION',
-      10765: 'SCI-FI',
-    };
+  String _getGenreName(BuildContext context, int genreId) {
+    final genreMap = AppLocalizations.of(context).strings.genreBadgeNames;
     return genreMap[genreId] ?? 'MOVIE';
   }
 }
@@ -971,6 +1238,389 @@ class _QuickActionButton extends StatelessWidget {
           icon,
           size: 16,
           color: isActive ? AppColors.textOnAccent : Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
+/// Modal de selección de filtro
+class _FilterModal extends StatelessWidget {
+  final String title;
+  final List<String> options;
+  final String? selectedValue;
+  final ValueChanged<String?> onSelect;
+  final VoidCallback onClear;
+
+  const _FilterModal({
+    required this.title,
+    required this.options,
+    this.selectedValue,
+    required this.onSelect,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = AppLocalizations.of(context);
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surfaceElevated,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colors.textTertiary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.h4,
+                ),
+                if (selectedValue != null)
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: onClear,
+                    child: Text(
+                      l10n.strings.searchClear,
+                      style: AppTypography.labelMedium.copyWith(
+                        color: colors.accent,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // Options
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              itemCount: options.length,
+              itemBuilder: (context, index) {
+                final option = options[index];
+                final isSelected = option == selectedValue;
+
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onSelect(option);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? colors.accent.withValues(alpha: 0.15)
+                          : colors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? colors.accent.withValues(alpha: 0.4)
+                            : colors.surfaceBorder,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          option,
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: isSelected
+                                ? colors.accent
+                                : colors.textPrimary,
+                            fontWeight:
+                                isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                        if (isSelected)
+                          Icon(
+                            CupertinoIcons.checkmark,
+                            color: colors.accent,
+                            size: 18,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Safe area
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
+      ),
+    ),
+    );
+  }
+}
+
+/// Bottom sheet de selección de plataformas de streaming con logos.
+/// Es ConsumerStatefulWidget para observar el provider internamente y
+/// mostrar loading / error / datos sin depender del caller.
+class _StreamingPickerSheet extends ConsumerStatefulWidget {
+  final List<int> selectedIds;
+  final ValueChanged<List<int>> onApply;
+  final VoidCallback onClear;
+
+  const _StreamingPickerSheet({
+    required this.selectedIds,
+    required this.onApply,
+    required this.onClear,
+  });
+
+  @override
+  ConsumerState<_StreamingPickerSheet> createState() => _StreamingPickerSheetState();
+}
+
+class _StreamingPickerSheetState extends ConsumerState<_StreamingPickerSheet> {
+  late Set<int> _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = Set<int>.from(widget.selectedIds);
+  }
+
+  void _toggle(int id) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (_selected.contains(id)) {
+        _selected.remove(id);
+      } else {
+        _selected.add(id);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = AppLocalizations.of(context);
+    final providersAsync = ref.watch(streamingProvidersProvider);
+
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.65,
+        ),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.textTertiary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n.strings.searchFilterStreaming,
+                    style: AppTypography.h4,
+                  ),
+                  if (_selected.isNotEmpty)
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: widget.onClear,
+                      child: Text(
+                        l10n.strings.searchClear,
+                        style: AppTypography.labelMedium.copyWith(
+                          color: colors.accent,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // Content: loading / error / grid
+            Flexible(
+              child: providersAsync.when(
+                loading: () => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: CircularProgressIndicator(color: colors.accent),
+                  ),
+                ),
+                error: (_, __) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(CupertinoIcons.exclamationmark_circle, color: colors.error, size: 32),
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.strings.stateErrorGenericMessage,
+                          style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                        ),
+                        const SizedBox(height: 12),
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          onPressed: () => ref.invalidate(streamingProvidersProvider),
+                          child: Text(
+                            l10n.strings.commonRetry,
+                            style: AppTypography.labelMedium.copyWith(color: colors.accent),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                data: (providers) => GridView.builder(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 2.8,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemCount: providers.length,
+                  itemBuilder: (context, index) {
+                    final provider = providers[index];
+                    final isSelected = _selected.contains(provider.providerId);
+
+                    return GestureDetector(
+                      onTap: () => _toggle(provider.providerId),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colors.accent.withValues(alpha: 0.15)
+                              : colors.surface,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected
+                                ? colors.accent.withValues(alpha: 0.6)
+                                : colors.surfaceBorder,
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Logo
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: CachedNetworkImage(
+                                imageUrl: provider.logoUrl,
+                                width: 32,
+                                height: 32,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => Container(
+                                  width: 32,
+                                  height: 32,
+                                  color: colors.surface,
+                                ),
+                                errorWidget: (_, __, ___) => Container(
+                                  width: 32,
+                                  height: 32,
+                                  color: colors.surface,
+                                  child: Icon(
+                                    CupertinoIcons.tv,
+                                    color: colors.textTertiary,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Name
+                            Expanded(
+                              child: Text(
+                                provider.providerName,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: isSelected ? colors.accent : colors.textPrimary,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            // Checkmark
+                            if (isSelected)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4),
+                                child: Icon(
+                                  CupertinoIcons.checkmark_circle_fill,
+                                  color: colors.accent,
+                                  size: 18,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // Apply button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: SizedBox(
+                width: double.infinity,
+                child: CupertinoButton(
+                  color: colors.accent,
+                  borderRadius: BorderRadius.circular(12),
+                  onPressed: () => widget.onApply(_selected.toList()),
+                  child: Text(
+                    l10n.strings.searchFilterStreamingApply,
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.textOnAccent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Safe area
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
         ),
       ),
     );

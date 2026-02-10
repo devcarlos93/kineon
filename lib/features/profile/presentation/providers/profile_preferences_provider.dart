@@ -6,8 +6,6 @@ import '../../../../core/l10n/locale_provider.dart';
 import '../../../../core/l10n/regional_prefs_provider.dart';
 import '../../../../core/network/supabase_client.dart';
 import '../../../../core/theme/theme_provider.dart';
-import '../../../home/presentation/providers/ai_picks_provider.dart';
-import '../../../home/presentation/providers/home_provider.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MODELO
@@ -132,8 +130,11 @@ class ProfilePreferencesNotifier extends StateNotifier<ProfilePreferencesState> 
         );
         // Sincronizar el idioma de la app con las preferencias del perfil
         _ref.read(localeProvider.notifier).setLocale(Locale(prefs.preferredLanguage));
-        // Sincronizar la región de streaming
-        _ref.read(regionalPrefsProvider.notifier).setCountry(prefs.countryCode);
+        // Sincronizar la región y el idioma juntos para no perder el idioma del usuario
+        _ref.read(regionalPrefsProvider.notifier).setRegionalPrefs(RegionalPrefs(
+          countryCode: prefs.countryCode,
+          languageTag: '${prefs.preferredLanguage}-${prefs.countryCode}',
+        ));
         // Sincronizar el tema
         _ref.read(themeModeProvider.notifier).setThemeModeFromString(prefs.themeMode);
       } else {
@@ -157,12 +158,9 @@ class ProfilePreferencesNotifier extends StateNotifier<ProfilePreferencesState> 
   Future<void> setCountryCode(String code) async {
     await _updatePreference(countryCode: code);
     // Actualizar el provider regional para TMDB
+    // Los providers (home, aiPicks, smartCollections) se recrean automáticamente
+    // via ref.watch(regionalPrefsProvider) en sus definiciones
     await _ref.read(regionalPrefsProvider.notifier).setCountry(code);
-    // Recargar datos del home con la nueva región
-    _ref.invalidate(homeProvider);
-    _ref.invalidate(aiPicksProvider);
-    _ref.read(homeProvider.notifier).loadHomeData();
-    _ref.read(aiPicksProvider.notifier).loadPicks(pickCount: 3);
   }
 
   /// Actualiza modo de tema
@@ -175,8 +173,12 @@ class ProfilePreferencesNotifier extends StateNotifier<ProfilePreferencesState> 
   /// Actualiza idioma preferido
   Future<void> setPreferredLanguage(String language) async {
     await _updatePreference(preferredLanguage: language);
-    // Actualizar el locale de la app
+    // Actualizar el locale de la app (UI)
     _ref.read(localeProvider.notifier).setLocale(Locale(language));
+    // Actualizar regionalPrefs para TMDB (títulos, sinopsis, etc.)
+    // Los providers (home, aiPicks, smartCollections) se recrean automáticamente
+    // via ref.watch(regionalPrefsProvider) en sus definiciones
+    await _ref.read(regionalPrefsProvider.notifier).setLanguage(language);
   }
 
   /// Método interno para actualizar preferencias

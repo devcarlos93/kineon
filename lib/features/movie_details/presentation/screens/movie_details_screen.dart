@@ -11,6 +11,7 @@ import '../../../library/data/repositories/library_repository.dart';
 import '../../../library/presentation/providers/library_providers.dart';
 import '../../../library/presentation/widgets/add_to_list_modal.dart';
 import '../providers/movie_details_provider.dart';
+import '../widgets/in_theaters_section.dart';
 import '../widgets/watch_providers_section.dart';
 
 class MovieDetailsScreen extends ConsumerStatefulWidget {
@@ -97,6 +98,11 @@ class _MovieDetailsScreenState extends ConsumerState<MovieDetailsScreen> {
                   // Info rápida
                   _buildQuickInfo(details),
                   const SizedBox(height: 24),
+
+                  // Ver en cines (solo películas en cartelera)
+                  if (widget.isMovie)
+                    InTheatersSection(details: details),
+                  if (widget.isMovie) const SizedBox(height: 24),
 
                   // Dónde verla (Watch Providers)
                   WatchProvidersSection(

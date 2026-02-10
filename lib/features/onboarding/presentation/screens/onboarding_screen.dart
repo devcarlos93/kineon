@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/l10n/locale_provider.dart';
+import '../../../../core/l10n/regional_prefs_provider.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/kineon_logo.dart';
@@ -50,10 +51,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       description: l10n.onboardingDesc3,
       illustration: OnboardingIllustration.lists,
     ),
+    OnboardingSlideData(
+      title: l10n.onboardingTitle4,
+      titleAccent: l10n.onboardingAccent4,
+      description: l10n.onboardingDesc4,
+      illustration: OnboardingIllustration.proTeaser,
+    ),
   ];
 
-  // Número total de páginas (constante: 3 slides + 1 preferencias)
-  static const int _totalPages = 4;
+  // Número total de páginas (constante: 4 slides + 1 preferencias)
+  static const int _totalPages = 5;
 
   @override
   void initState() {
@@ -269,6 +276,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 currentLocale: currentLocale,
                 onLocaleChanged: (locale) {
                   ref.read(localeProvider.notifier).setLocale(locale);
+                  ref.read(regionalPrefsProvider.notifier).setLanguage(locale.languageCode);
                 },
               ).animate().fadeIn(delay: 200.ms),
 

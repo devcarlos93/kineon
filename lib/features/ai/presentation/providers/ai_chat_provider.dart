@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/l10n/regional_prefs_provider.dart';
 import '../../../../core/network/supabase_client.dart';
 import '../../../../core/services/analytics_service.dart';
@@ -256,6 +259,9 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
         return;
       }
 
+      // Actualizar quick_replies del último mensaje assistant al idioma actual
+      messages = _localizeLastQuickReplies(messages);
+
       // Mostrar mensajes sin hidratar primero (carga rápida)
       state = AiChatState(
         threadId: threadId,
@@ -328,41 +334,68 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
     }
   }
 
-  /// Obtiene el mensaje de bienvenida según el idioma
+  /// Obtiene el mensaje de bienvenida usando l10n
   static ChatMessage _getWelcomeMessage(String language) {
-    final isSpanish = language.startsWith('es');
+    final langCode = language.split('-').first;
+    final l10n = AppLocalizations(Locale(langCode));
     return ChatMessage(
       role: ChatRole.assistant,
-      text: isSpanish
-          ? 'Cuéntame qué quieres ver hoy. Puedo recomendarte películas o series basadas en tu estado de ánimo, género favorito o algo similar a lo que ya te gustó.'
-          : 'Tell me what you want to watch today. I can recommend movies or series based on your mood, favorite genre, or something similar to what you already liked.',
-      quickReplies: isSpanish
-          ? const [
-              'Algo para relajarme',
-              'Sci-fi mind-bending',
-              'Para ver en pareja',
-              'Sorpréndeme',
-            ]
-          : const [
-              'Something to relax',
-              'Sci-fi mind-bending',
-              'For a date night',
-              'Surprise me',
-            ],
+      text: l10n.aiWelcomeMessage,
+      quickReplies: [
+        l10n.aiQuickReplyRelax,
+        l10n.aiQuickReplySciFi,
+        l10n.aiQuickReplyCouple,
+        l10n.aiQuickReplySurprise,
+      ],
     );
   }
 
-  /// Obtiene el mensaje de error según el idioma
+  /// Reemplaza los quick_replies del último mensaje assistant con los del idioma actual
+  List<ChatMessage> _localizeLastQuickReplies(List<ChatMessage> messages) {
+    if (messages.isEmpty) return messages;
+
+    // Buscar el último mensaje del asistente con quick replies
+    for (int i = messages.length - 1; i >= 0; i--) {
+      final msg = messages[i];
+      if (msg.role == ChatRole.assistant && msg.quickReplies.isNotEmpty) {
+        final updated = List<ChatMessage>.from(messages);
+        updated[i] = ChatMessage(
+          id: msg.id,
+          role: msg.role,
+          text: msg.text,
+          cards: msg.cards,
+          quickReplies: _getDefaultQuickReplies(),
+        );
+        return updated;
+      }
+    }
+    return messages;
+  }
+
+  /// Quick replies por defecto en el idioma actual
+  List<String> _getDefaultQuickReplies() {
+    final langCode = _language.split('-').first;
+    final l10n = AppLocalizations(Locale(langCode));
+    return [
+      l10n.aiQuickReplyRelax,
+      l10n.aiQuickReplySciFi,
+      l10n.aiQuickReplyCouple,
+      l10n.aiQuickReplySurprise,
+    ];
+  }
+
+  /// Obtiene el mensaje de error usando l10n
   ChatMessage _getErrorMessage() {
-    final isSpanish = _language.startsWith('es');
+    final langCode = _language.split('-').first;
+    final l10n = AppLocalizations(Locale(langCode));
     return ChatMessage(
       role: ChatRole.assistant,
-      text: isSpanish
-          ? 'Lo siento, hubo un problema al procesar tu mensaje. ¿Intentamos de nuevo?'
-          : 'Sorry, there was a problem processing your message. Shall we try again?',
-      quickReplies: isSpanish
-          ? const ['Reintentar', 'Algo popular', 'Sorpréndeme']
-          : const ['Retry', 'Something popular', 'Surprise me'],
+      text: l10n.aiErrorMessage,
+      quickReplies: [
+        l10n.aiQuickReplyRetry,
+        l10n.aiQuickReplyPopular,
+        l10n.aiQuickReplySurprise,
+      ],
     );
   }
 

@@ -133,16 +133,16 @@ class AIPicksNotifier extends StateNotifier<AIPicksState> {
     this._cache, {
     this.language = 'es-ES',
     this.region = 'ES',
-  }) : super(const AIPicksState());
+  }) : super(const AIPicksState()) {
+    // Auto-cargar al crear para que funcione cuando el provider se recrea (ej: cambio de idioma)
+    loadPicks(pickCount: 5);
+  }
 
-  /// Genera la cache key - simplificado para evitar problemas de sincronización
-  /// Solo usa userId (las preferencias regionales cambian durante init y causaban cache miss)
-  /// El contenido se actualizará en background con el idioma correcto
+  /// Genera la cache key incluyendo idioma para separar cache por idioma
   String _getCacheKey() {
     final userId = _client.auth.currentUser?.id ?? 'anonymous';
-    // NO incluir language/region porque cambian durante la inicialización
-    // y causan que la segunda instancia del provider busque una key diferente
-    return 'ai_picks_v2_$userId';
+    final lang = language.split('-').first; // es, en, etc.
+    return 'ai_picks_v2_${userId}_$lang';
   }
 
   /// Carga los picks de IA con estrategia cache-first
@@ -395,12 +395,12 @@ class AIPicksNotifier extends StateNotifier<AIPicksState> {
 }
 
 /// Provider de AI Picks con cache local
-/// Usa ref.read para evitar rebuilds cuando cambian dependencias durante init
+/// Usa ref.watch para regionalPrefs para que se recree al cambiar idioma/región
 final aiPicksProvider =
     StateNotifierProvider<AIPicksNotifier, AIPicksState>((ref) {
   final client = ref.read(supabaseClientProvider);
   final cache = ref.read(cacheServiceProvider);
-  final regionalPrefs = ref.read(regionalPrefsProvider);
+  final regionalPrefs = ref.watch(regionalPrefsProvider);
   return AIPicksNotifier(
     client,
     cache,

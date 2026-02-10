@@ -56,6 +56,19 @@ class StringsEs implements AppStrings {
   String get onboardingPrefsSubtitle =>
       'Selecciona al menos 3 para personalizar tus recomendaciones';
 
+  @override
+  String get moodHappy => 'Feliz';
+  @override
+  String get moodEpic => 'Épico';
+  @override
+  String get moodReflective => 'Reflexivo';
+  @override
+  String get moodIntense => 'Intenso';
+  @override
+  String get moodRelaxed => 'Relajado';
+  @override
+  String get moodNostalgic => 'Nostálgico';
+
   // ═══════════════════════════════════════════════════════════════════════════
   // LOGIN
   // ═══════════════════════════════════════════════════════════════════════════
@@ -107,7 +120,7 @@ class StringsEs implements AppStrings {
   String get navSearch => 'Buscar';
 
   @override
-  String get navAI => 'IA';
+  String get navAI => 'Kino';
 
   @override
   String get navLibrary => 'Biblioteca';
@@ -298,6 +311,15 @@ class StringsEs implements AppStrings {
   String get searchFilterYear => 'Año';
 
   @override
+  String get searchFilterStreaming => 'Plataforma';
+
+  @override
+  String searchFilterStreamingCount(int count) => '$count plataformas';
+
+  @override
+  String get searchFilterStreamingApply => 'Aplicar';
+
+  @override
   String get searchFilterRating => 'Rating';
 
   @override
@@ -344,6 +366,67 @@ class StringsEs implements AppStrings {
 
   @override
   String get searchFilterMinRating => 'Rating mín.';
+
+  @override
+  String get searchDiscoveryPlaceholder => 'Algo como Interstellar...';
+
+  @override
+  String get searchDiscoveryListening => 'Escuchando...';
+
+  @override
+  String get searchDiscoveryTryPrefix => 'Prueba';
+
+  @override
+  String get searchDiscoveryEmptyTitle => 'Búsqueda Inteligente';
+
+  @override
+  String get searchDiscoveryEmptySubtitle => 'Describe lo que quieres ver y nuestra IA encontrará las mejores opciones para ti';
+
+  @override
+  String get searchDiscoveryLoading => 'Buscando contenido perfecto...';
+
+  @override
+  String get searchDiscoveryAiRecommended => 'Recomendado por IA';
+
+  @override
+  String get searchDiscoveryMatch => 'COINCIDENCIA';
+
+  @override
+  String get searchDiscoveryErrorTitle => 'Algo salió mal';
+
+  @override
+  String get searchDiscoveryNoResultsTitle => 'Sin resultados';
+
+  @override
+  String get searchDiscoveryNoResultsSubtitle => 'Intenta con otra descripción';
+
+  @override
+  Map<int, String> get genreBadgeNames => const {
+    28: 'ACCIÓN', 12: 'AVENTURA', 16: 'ANIMACIÓN', 35: 'COMEDIA',
+    80: 'CRIMEN', 99: 'DOCUMENTAL', 18: 'DRAMA', 10751: 'FAMILIA',
+    14: 'FANTASÍA', 36: 'HISTORIA', 27: 'TERROR', 10402: 'MÚSICA',
+    9648: 'MISTERIO', 10749: 'ROMANCE', 878: 'SCI-FI', 53: 'THRILLER',
+    10752: 'GUERRA', 37: 'WESTERN', 10759: 'ACCIÓN', 10765: 'SCI-FI',
+  };
+
+  @override
+  List<String> get searchFilterMoodOptions => const [
+    'Emocionante', 'Relajante', 'Intenso', 'Divertido',
+    'Romántico', 'Oscuro', 'Inspirador', 'Épico',
+    'Misterioso', 'Nostálgico',
+  ];
+
+  @override
+  List<String> get searchDiscoverySuggestions => const [
+    'Algo como Interstellar pero más corto',
+    'Comedia romántica para ver en pareja',
+    'Serie de terror psicológico',
+    'Película de los 80s de acción',
+    'Algo relajante para el domingo',
+    'Drama con final feliz',
+    'Ciencia ficción con viajes en el tiempo',
+    'Thriller de suspenso sin violencia',
+  ];
 
   // ═══════════════════════════════════════════════════════════════════════════
   // AI SCREEN
@@ -819,6 +902,12 @@ class StringsEs implements AppStrings {
   @override
   String get profileFeatureUnlimitedLists => 'Listas personalizadas sin límites';
 
+  @override
+  String get profileFeatureStories => 'Historias basadas en tus gustos';
+
+  @override
+  String get profileFeatureSmartCollections => 'Colecciones inteligentes semanales';
+
   // ═══════════════════════════════════════════════════════════════════════════
   // PAYWALL
   // ═══════════════════════════════════════════════════════════════════════════
@@ -950,6 +1039,18 @@ class StringsEs implements AppStrings {
   @override
   String get aiPicksPersonalize => 'Personalizar';
 
+  @override
+  String get aiPicksContentMovie => 'PELÍCULA';
+
+  @override
+  String get aiPicksContentSeries => 'SERIE';
+
+  @override
+  String get aiPicksMatchBadge => '98% MATCH';
+
+  @override
+  String get aiPicksTrendingBadge => 'TRENDING';
+
   // Quick Preferences Bottom Sheet
   @override
   String get quickPrefsTitle => 'Ajusta tus preferencias';
@@ -995,8 +1096,227 @@ class StringsEs implements AppStrings {
   String get watchProviderNotAvailable => 'No disponible en tu país';
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // SMART COLLECTIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  String get smartCollections => 'Colecciones Inteligentes';
+
+  @override
+  String get smartCollectionsSubtitle => 'Selecciones curadas por IA';
+
+  @override
+  String collectionItems(int count) => '$count títulos';
+
+  @override
+  String get collectionWhyIncluded => 'Por qué está incluido';
+
+  @override
+  String get collectionShare => 'Compartir colección';
+
+  @override
+  String get collectionEmpty => 'No hay colecciones esta semana';
+
+  @override
+  String get collectionLoading => 'Cargando colecciones...';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EN CINES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  String get inTheaters => 'En cines';
+
+  @override
+  String get inTheatersKinoMessage => 'Te ayudo a encontrar cines';
+
+  @override
+  String get inTheatersFindCinemas => 'Buscar cines';
+
+  @override
+  String get inTheatersRegionalChain => 'Cadenas de cine';
+
+  @override
+  String get inTheatersShowtimes => 'Ver horarios';
+
+  @override
+  String get inTheatersRemindMe => 'Recordarme';
+
+  @override
+  String get inTheatersInviteFriends => 'Invitar amigos';
+
+  @override
+  String get inTheatersReminderSet => 'Recordatorio programado';
+
+  @override
+  String inTheatersShareText(String title) =>
+      'Vamos a ver $title al cine! Mira detalles en Kineon';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ONBOARDING PRO TEASER (Slide 4)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  String get onboardingTitle4 => 'Lleva tu experiencia';
+
+  @override
+  String get onboardingAccent4 => 'al siguiente nivel.';
+
+  @override
+  String get onboardingDesc4 =>
+      'Con Pro desbloqueas todo el poder de la IA para encontrar exactamente lo que quieres ver.';
+
+  @override
+  String get onboardingProFeature1 => 'Chat IA ilimitado';
+
+  @override
+  String get onboardingProFeature2 => 'Búsqueda inteligente sin límites';
+
+  @override
+  String get onboardingProFeature3 => 'Recomendaciones personalizadas';
+
+  @override
+  String get onboardingProFeature4 => 'Acceso anticipado a nuevas funciones';
+
+  @override
+  String get onboardingProFeature5 => 'Colecciones inteligentes semanales';
+
+  @override
+  String get onboardingProFeature6 => 'Historias cinematográficas con IA';
+
+  @override
+  String get onboardingProBadge => 'PRO';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // USAGE PROGRESS BAR
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  String usageRemaining(int used, int total) => '$used / $total usos hoy';
+
+  @override
+  String get usageUnlimited => 'Ilimitado';
+
+  @override
+  String get usageUpgradeCta => 'Desbloquear todo';
+
+  @override
+  String get usageAiCredits => 'Créditos IA';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SMART PAYWALL (Positive moments)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  String get smartPaywallTitle => 'Te encanta, verdad?';
+
+  @override
+  String get smartPaywallSubtitle =>
+      'Con Pro puedes disfrutar de esto sin límites, todos los días.';
+
+  @override
+  String get smartPaywallCta => 'Probar Pro gratis';
+
+  @override
+  String get smartPaywallDismiss => 'Ahora no';
+
+  @override
+  String get smartPaywallTrialHint => 'Cancela cuando quieras';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STORIES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  String get storiesTitle => 'Historias AI';
+
+  @override
+  String get storiesDescription => 'Descubre contenido con IA en pantalla completa';
+
+  @override
+  String get storiesCta => 'Ver ahora';
+
+  @override
+  String get storiesLoading => 'Preparando historias...';
+
+  @override
+  String get storiesEmpty => 'No hay historias disponibles';
+
+  @override
+  String get storiesError => 'Error al cargar historias';
+
+  @override
+  String get storiesSwipeHint => 'Desliza para descubrir';
+
+  @override
+  String get storiesTapToDetails => 'Toca para ver detalles';
+
+  @override
+  String get storiesEndTitle => 'Has visto todas las historias';
+
+  @override
+  String get storiesEndSubtitle => 'Vuelve más tarde para nuevas recomendaciones';
+
+  @override
+  String get storiesEndAction => 'Volver al inicio';
+
+  @override
+  String get storiesSessionCount => 'sesiones hoy';
+
+  @override
+  String get storiesProTitle => '¡Te encanta lo que ves!';
+
+  @override
+  String get storiesProSubtitle =>
+      'Hay muchas más historias esperándote. Desbloquea acceso ilimitado y descubre películas que te van a encantar.';
+
+  @override
+  String get storiesProCta => 'Desbloquear con Pro';
+
+  @override
+  String get storiesProFreeLabel => '3 gratis';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // AI WELCOME SCREEN
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  String get aiWelcomeHello => 'Hola, soy ';
+
+  @override
+  String get aiWelcomeGreeting => 'Estoy aquí para ayudarte a descubrir películas y series perfectas para ti.';
+
+  @override
+  String get aiViewHistory => 'Ver historial';
+
+  @override
+  String get aiNewChat => 'Nuevo chat';
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // GENERAL FALLBACKS
   // ═══════════════════════════════════════════════════════════════════════════
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // KINO MASCOT / AI STATES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  String get kinoTagline => 'Tu asistente de cine con IA';
+
+  @override
+  String get kinoLoadingPicks => 'Cargando recomendaciones...';
+
+  @override
+  String get kinoLoadingPicksHint => 'Desliza hacia abajo para actualizar';
+
+  @override
+  String get kinoRefiningPicks => 'Refinando recomendaciones...';
+
+  @override
+  String get kinoErrorTitle => 'Algo salió mal';
+
+  @override
+  String get kinoRetry => 'Reintentar';
 
   @override
   String get noTitle => 'Sin título';

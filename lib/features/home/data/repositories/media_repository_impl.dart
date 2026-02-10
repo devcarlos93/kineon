@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/cache/cache_service.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/l10n/regional_prefs_provider.dart';
 import '../../../../core/network/connectivity_provider.dart';
 import '../../domain/entities/media_item.dart';
 import '../../domain/entities/movie_details.dart';
@@ -12,10 +13,12 @@ import '../models/media_item_model.dart';
 
 /// Provider para el repositorio de media
 final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
+  final lang = ref.watch(regionalPrefsProvider).languageCode;
   return MediaRepositoryImpl(
     ref.watch(tmdbRemoteDataSourceProvider),
     ref.watch(cacheServiceProvider),
     ref.watch(connectivityProvider),
+    languageCode: lang,
   );
 });
 
@@ -24,15 +27,14 @@ class MediaRepositoryImpl implements MediaRepository {
   final TmdbRemoteDataSource _remoteDataSource;
   final CacheService _cache;
   final ConnectivityStatus _connectivity;
+  final String _lang;
 
-  MediaRepositoryImpl(this._remoteDataSource, this._cache, this._connectivity);
+  MediaRepositoryImpl(this._remoteDataSource, this._cache, this._connectivity, {String languageCode = 'es'}) : _lang = languageCode;
 
   @override
   Future<Either<Failure, PaginatedResult<MediaItem>>> getTrendingMovies({int page = 1}) async {
-    final cacheKey = '${CacheKeys.trending('movie', 'week')}_$page';
-
     return _executeWithCacheFallback(
-      cacheKey: cacheKey,
+      cacheKey: '${_lang}_${CacheKeys.trending('movie', 'week')}_$page',
       ttlMinutes: CacheService.ttlTrending,
       fetch: () => _remoteDataSource.getTrendingMovies(page: page),
     );
@@ -41,7 +43,7 @@ class MediaRepositoryImpl implements MediaRepository {
   @override
   Future<Either<Failure, PaginatedResult<MediaItem>>> getTrendingTv({int page = 1}) async {
     return _executeWithCacheFallback(
-      cacheKey: '${CacheKeys.trending('tv', 'week')}_$page',
+      cacheKey: '${_lang}_${CacheKeys.trending('tv', 'week')}_$page',
       ttlMinutes: CacheService.ttlTrending,
       fetch: () => _remoteDataSource.getTrendingTv(page: page),
     );
@@ -50,7 +52,7 @@ class MediaRepositoryImpl implements MediaRepository {
   @override
   Future<Either<Failure, PaginatedResult<MediaItem>>> getPopularMovies({int page = 1}) async {
     return _executeWithCacheFallback(
-      cacheKey: '${CacheKeys.popular('movie')}_$page',
+      cacheKey: '${_lang}_${CacheKeys.popular('movie')}_$page',
       ttlMinutes: CacheService.ttlPopular,
       fetch: () => _remoteDataSource.getPopularMovies(page: page),
     );
@@ -59,7 +61,7 @@ class MediaRepositoryImpl implements MediaRepository {
   @override
   Future<Either<Failure, PaginatedResult<MediaItem>>> getPopularTv({int page = 1}) async {
     return _executeWithCacheFallback(
-      cacheKey: '${CacheKeys.popular('tv')}_$page',
+      cacheKey: '${_lang}_${CacheKeys.popular('tv')}_$page',
       ttlMinutes: CacheService.ttlPopular,
       fetch: () => _remoteDataSource.getPopularTv(page: page),
     );
@@ -68,7 +70,7 @@ class MediaRepositoryImpl implements MediaRepository {
   @override
   Future<Either<Failure, PaginatedResult<MediaItem>>> getTopRatedMovies({int page = 1}) async {
     return _executeWithCacheFallback(
-      cacheKey: '${CacheKeys.topRated('movie')}_$page',
+      cacheKey: '${_lang}_${CacheKeys.topRated('movie')}_$page',
       ttlMinutes: CacheService.ttlDetails,
       fetch: () => _remoteDataSource.getTopRatedMovies(page: page),
     );
@@ -77,7 +79,7 @@ class MediaRepositoryImpl implements MediaRepository {
   @override
   Future<Either<Failure, PaginatedResult<MediaItem>>> getTopRatedTv({int page = 1}) async {
     return _executeWithCacheFallback(
-      cacheKey: '${CacheKeys.topRated('tv')}_$page',
+      cacheKey: '${_lang}_${CacheKeys.topRated('tv')}_$page',
       ttlMinutes: CacheService.ttlDetails,
       fetch: () => _remoteDataSource.getTopRatedTv(page: page),
     );
@@ -86,7 +88,7 @@ class MediaRepositoryImpl implements MediaRepository {
   @override
   Future<Either<Failure, PaginatedResult<MediaItem>>> getUpcomingMovies({int page = 1}) async {
     return _executeWithCacheFallback(
-      cacheKey: '${CacheKeys.upcoming()}_$page',
+      cacheKey: '${_lang}_${CacheKeys.upcoming()}_$page',
       ttlMinutes: CacheService.ttlTrending,
       fetch: () => _remoteDataSource.getUpcomingMovies(page: page),
     );
@@ -95,7 +97,7 @@ class MediaRepositoryImpl implements MediaRepository {
   @override
   Future<Either<Failure, PaginatedResult<MediaItem>>> getNowPlayingMovies({int page = 1}) async {
     return _executeWithCacheFallback(
-      cacheKey: '${CacheKeys.nowPlaying()}_$page',
+      cacheKey: '${_lang}_${CacheKeys.nowPlaying()}_$page',
       ttlMinutes: CacheService.ttlTrending,
       fetch: () => _remoteDataSource.getNowPlayingMovies(page: page),
     );
@@ -104,7 +106,7 @@ class MediaRepositoryImpl implements MediaRepository {
   @override
   Future<Either<Failure, PaginatedResult<MediaItem>>> getOnTheAirTv({int page = 1}) async {
     return _executeWithCacheFallback(
-      cacheKey: 'on_the_air_tv_$page',
+      cacheKey: '${_lang}_on_the_air_tv_$page',
       ttlMinutes: CacheService.ttlTrending,
       fetch: () => _remoteDataSource.getOnTheAirTv(page: page),
     );

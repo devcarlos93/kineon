@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/router/app_router.dart';
@@ -446,6 +448,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 color: colors.textTertiary,
                 decoration: TextDecoration.underline,
               ),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => launchUrl(
+                      Uri.parse('https://www.villadiegodev.lat/kineon/terminos-y-condiciones'),
+                      mode: LaunchMode.externalApplication,
+                    ),
             ),
             const TextSpan(text: ' & '),
             TextSpan(
@@ -454,6 +461,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 color: colors.textTertiary,
                 decoration: TextDecoration.underline,
               ),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => launchUrl(
+                      Uri.parse('https://www.villadiegodev.lat/kineon/politica-de-privacidad'),
+                      mode: LaunchMode.externalApplication,
+                    ),
             ),
             const TextSpan(text: '.'),
           ],

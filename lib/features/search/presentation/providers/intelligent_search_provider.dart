@@ -58,6 +58,7 @@ class DiscoverFilters {
   final String? primaryReleaseDateGte;
   final String? primaryReleaseDateLte;
   final String sortBy;
+  final List<int> withWatchProviders;
 
   const DiscoverFilters({
     this.withGenres = const [],
@@ -69,6 +70,7 @@ class DiscoverFilters {
     this.primaryReleaseDateGte,
     this.primaryReleaseDateLte,
     this.sortBy = 'popularity.desc',
+    this.withWatchProviders = const [],
   });
 
   factory DiscoverFilters.fromJson(Map<String, dynamic> json) {
@@ -82,6 +84,7 @@ class DiscoverFilters {
       primaryReleaseDateGte: json['primary_release_date_gte'] as String?,
       primaryReleaseDateLte: json['primary_release_date_lte'] as String?,
       sortBy: json['sort_by'] as String? ?? 'popularity.desc',
+      withWatchProviders: (json['with_watch_providers'] as List<dynamic>?)?.cast<int>() ?? [],
     );
   }
 
@@ -97,6 +100,7 @@ class DiscoverFilters {
       if (primaryReleaseDateGte != null) 'primary_release_date.gte': primaryReleaseDateGte,
       if (primaryReleaseDateLte != null) 'primary_release_date.lte': primaryReleaseDateLte,
       'sort_by': sortBy,
+      if (withWatchProviders.isNotEmpty) 'with_watch_providers': withWatchProviders.join('|'),
     };
   }
 }
@@ -145,6 +149,7 @@ class IntelligentSearchState {
   final String? selectedMood;
   final String? selectedRuntime;
   final String? selectedYear;
+  final List<int>? selectedWatchProviders;
 
   const IntelligentSearchState({
     this.query = '',
@@ -159,11 +164,18 @@ class IntelligentSearchState {
     this.selectedMood,
     this.selectedRuntime,
     this.selectedYear,
+    this.selectedWatchProviders,
   });
 
   bool get isLoading => isLoadingPlan || isLoadingResults;
   bool get hasResults => results.isNotEmpty;
   bool get hasPlan => plan != null;
+  bool get hasAnyFilter =>
+      (selectedGenreIds != null && selectedGenreIds!.isNotEmpty) ||
+      selectedMood != null ||
+      selectedRuntime != null ||
+      selectedYear != null ||
+      (selectedWatchProviders != null && selectedWatchProviders!.isNotEmpty);
 
   IntelligentSearchState copyWith({
     String? query,
@@ -178,8 +190,14 @@ class IntelligentSearchState {
     String? selectedMood,
     String? selectedRuntime,
     String? selectedYear,
+    List<int>? selectedWatchProviders,
     bool clearPlan = false,
     bool clearFilters = false,
+    bool clearGenre = false,
+    bool clearMood = false,
+    bool clearRuntime = false,
+    bool clearYear = false,
+    bool clearWatchProviders = false,
   }) {
     return IntelligentSearchState(
       query: query ?? this.query,
@@ -190,10 +208,11 @@ class IntelligentSearchState {
       isLoadingResults: isLoadingResults ?? this.isLoadingResults,
       error: error,
       limitReached: limitReached ?? this.limitReached,
-      selectedGenreIds: clearFilters ? null : (selectedGenreIds ?? this.selectedGenreIds),
-      selectedMood: clearFilters ? null : (selectedMood ?? this.selectedMood),
-      selectedRuntime: clearFilters ? null : (selectedRuntime ?? this.selectedRuntime),
-      selectedYear: clearFilters ? null : (selectedYear ?? this.selectedYear),
+      selectedGenreIds: (clearFilters || clearGenre) ? null : (selectedGenreIds ?? this.selectedGenreIds),
+      selectedMood: (clearFilters || clearMood) ? null : (selectedMood ?? this.selectedMood),
+      selectedRuntime: (clearFilters || clearRuntime) ? null : (selectedRuntime ?? this.selectedRuntime),
+      selectedYear: (clearFilters || clearYear) ? null : (selectedYear ?? this.selectedYear),
+      selectedWatchProviders: (clearFilters || clearWatchProviders) ? null : (selectedWatchProviders ?? this.selectedWatchProviders),
     );
   }
 }
@@ -383,17 +402,185 @@ class IntelligentSearchNotifier extends StateNotifier<IntelligentSearchState> {
 
   /// Actualiza filtro de género y re-ejecuta
   void setGenreFilter(List<int>? genreIds) {
-    state = state.copyWith(selectedGenreIds: genreIds);
-    if (state.query.isNotEmpty) {
-      _executeSearch(state.query);
-    }
+    state = genreIds != null
+        ? state.copyWith(selectedGenreIds: genreIds)
+        : state.copyWith(clearGenre: true);
+    _applyFilters();
   }
 
   /// Actualiza filtro de mood y re-ejecuta
   void setMoodFilter(String? mood) {
-    state = state.copyWith(selectedMood: mood);
+    state = mood != null
+        ? state.copyWith(selectedMood: mood)
+        : state.copyWith(clearMood: true);
+    // Mood se re-ejecuta con IA si hay query, o discover directo si solo hay filtros
     if (state.query.isNotEmpty) {
       _executeSearch(state.query);
+    } else if (state.hasAnyFilter) {
+      _discoverWithFiltersOnly();
+    }
+  }
+
+  /// Actualiza filtro de año y re-ejecuta
+  void setYearFilter(String? year) {
+    state = year != null
+        ? state.copyWith(selectedYear: year)
+        : state.copyWith(clearYear: true);
+    _applyFilters();
+  }
+
+  /// Actualiza filtro de runtime y re-ejecuta
+  void setRuntimeFilter(String? runtime) {
+    state = runtime != null
+        ? state.copyWith(selectedRuntime: runtime)
+        : state.copyWith(clearRuntime: true);
+    _applyFilters();
+  }
+
+  /// Actualiza filtro de plataforma de streaming y re-ejecuta
+  void setWatchProviderFilter(List<int>? providerIds) {
+    state = providerIds != null
+        ? state.copyWith(selectedWatchProviders: providerIds)
+        : state.copyWith(clearWatchProviders: true);
+    _applyFilters();
+  }
+
+  /// Lógica unificada: decide si usar plan + overrides o discover directo
+  void _applyFilters() {
+    if (state.plan != null) {
+      _rediscoverWithOverrides();
+    } else if (state.query.isNotEmpty) {
+      _executeSearch(state.query);
+    } else if (state.hasAnyFilter) {
+      _discoverWithFiltersOnly();
+    }
+  }
+
+  /// Construye los params de filtro del usuario (sin plan de IA)
+  Map<String, dynamic> _buildFilterParams() {
+    final params = <String, dynamic>{
+      'sort_by': 'popularity.desc',
+      'vote_count.gte': 50,
+    };
+
+    if (state.selectedGenreIds != null && state.selectedGenreIds!.isNotEmpty) {
+      params['with_genres'] = state.selectedGenreIds!.join(',');
+    }
+
+    if (state.selectedYear != null) {
+      final year = state.selectedYear!;
+      params['primary_release_date.gte'] = '$year-01-01';
+      params['primary_release_date.lte'] = '$year-12-31';
+    }
+
+    if (state.selectedRuntime != null) {
+      final runtime = int.tryParse(state.selectedRuntime!);
+      if (runtime != null) {
+        params['with_runtime.lte'] = runtime;
+      }
+    }
+
+    if (state.selectedWatchProviders != null && state.selectedWatchProviders!.isNotEmpty) {
+      params['with_watch_providers'] = state.selectedWatchProviders!.join('|');
+      params['watch_region'] = _region;
+    }
+
+    return params;
+  }
+
+  /// Discover directo con solo los filtros del usuario (sin IA)
+  Future<void> _discoverWithFiltersOnly() async {
+    if (!mounted) return;
+
+    state = state.copyWith(isLoadingResults: true, error: null);
+
+    try {
+      final isMovie = state.mediaType == 'movie';
+      final params = _buildFilterParams();
+
+      final result = isMovie
+          ? await _repository.discoverMoviesWithParams(params)
+          : await _repository.discoverTvWithParams(params);
+
+      if (!mounted) return;
+
+      result.fold(
+        (failure) {
+          state = state.copyWith(isLoadingResults: false, error: failure.message);
+        },
+        (paginatedResult) {
+          state = state.copyWith(
+            results: paginatedResult.items,
+            isLoadingResults: false,
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      state = state.copyWith(
+        isLoadingResults: false,
+        error: 'Error: $e',
+      );
+    }
+  }
+
+  /// Re-ejecuta discover con el plan actual + overrides manuales del usuario
+  Future<void> _rediscoverWithOverrides() async {
+    if (!mounted || state.plan == null) return;
+
+    state = state.copyWith(isLoadingResults: true);
+
+    try {
+      final plan = state.plan!;
+      final isMovie = plan.mediaType == 'movie';
+      final params = plan.discover.toQueryParams();
+
+      // Aplicar overrides del usuario
+      if (state.selectedGenreIds != null && state.selectedGenreIds!.isNotEmpty) {
+        params['with_genres'] = state.selectedGenreIds!.join(',');
+      }
+      if (state.selectedYear != null) {
+        final year = state.selectedYear!;
+        params['primary_release_date.gte'] = '$year-01-01';
+        params['primary_release_date.lte'] = '$year-12-31';
+      }
+      if (state.selectedRuntime != null) {
+        final runtime = int.tryParse(state.selectedRuntime!);
+        if (runtime != null) {
+          params['with_runtime.lte'] = runtime;
+        }
+      }
+      if (state.selectedWatchProviders != null && state.selectedWatchProviders!.isNotEmpty) {
+        params['with_watch_providers'] = state.selectedWatchProviders!.join('|');
+        params['watch_region'] = _region;
+      }
+
+      final result = isMovie
+          ? await _repository.discoverMoviesWithParams(params)
+          : await _repository.discoverTvWithParams(params);
+
+      if (!mounted) return;
+
+      result.fold(
+        (failure) {
+          state = state.copyWith(
+            isLoadingResults: false,
+            error: failure.message,
+          );
+        },
+        (paginatedResult) {
+          state = state.copyWith(
+            results: paginatedResult.items,
+            isLoadingResults: false,
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      state = state.copyWith(
+        isLoadingResults: false,
+        error: 'Error al buscar contenido: $e',
+      );
     }
   }
 

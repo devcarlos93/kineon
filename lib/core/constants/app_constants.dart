@@ -51,6 +51,7 @@ class EdgeFunctions {
   static const String aiHomePicks = 'ai-home-picks';
   static const String aiMovieInsight = 'ai-movie-insight';
   static const String aiSearchPlan = 'ai-search-plan';
+  static const String aiSmartCollections = 'ai-smart-collections';
 }
 
 /// Nombres de las tablas en Supabase
@@ -62,6 +63,8 @@ class SupabaseTables {
   static const String userRatings = 'user_ratings';
   static const String userLists = 'user_lists';
   static const String userListItems = 'user_list_items';
+  static const String smartCollections = 'smart_collections';
+  static const String smartCollectionItems = 'smart_collection_items';
 }
 
 /// Tipos de contenido (película o serie)

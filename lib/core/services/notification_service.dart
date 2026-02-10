@@ -23,6 +23,7 @@ class NotificationService {
   static const int _pickOfDayId = 1;
   static const int _watchlistReminderId = 2;
   static const int _weeklySummaryId = 3;
+  static const int _cinemaReminderId = 4;
 
   // Preference keys
   static const String _keyNotificationsEnabled = 'notifications_enabled';
@@ -264,6 +265,39 @@ class NotificationService {
         presentSound: true,
       ),
     );
+  }
+
+  /// Programa un recordatorio de cine para una película
+  Future<void> scheduleCinemaReminder({
+    required int movieId,
+    required String movieTitle,
+    required DateTime reminderDate,
+  }) async {
+    await _plugin.cancel(_cinemaReminderId);
+
+    final scheduledDate = tz.TZDateTime.from(reminderDate, tz.local);
+    final now = tz.TZDateTime.now(tz.local);
+
+    if (scheduledDate.isBefore(now)) return;
+
+    await _plugin.zonedSchedule(
+      _cinemaReminderId,
+      'Es hora de ir al cine',
+      '$movieTitle te espera en la gran pantalla',
+      scheduledDate,
+      _getNotificationDetails(),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'cinema:$movieId',
+    );
+
+    debugPrint('🎬 Cinema reminder scheduled for $movieTitle at $scheduledDate');
+  }
+
+  /// Cancela el recordatorio de cine
+  Future<void> cancelCinemaReminder() async {
+    await _plugin.cancel(_cinemaReminderId);
   }
 
   /// Cancela todas las notificaciones

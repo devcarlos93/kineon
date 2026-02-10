@@ -176,6 +176,7 @@ extension SupabaseClientX on SupabaseClient {
     int pickCount = 5,
     String? language,
     String? region,
+    bool storyMode = false,
   }) async {
     final session = auth.currentSession;
     final token = session?.accessToken;
@@ -195,6 +196,7 @@ extension SupabaseClientX on SupabaseClient {
       'pick_count': pickCount,
       if (language != null) 'language': language,
       if (region != null) 'region': region,
+      if (storyMode) 'story_mode': true,
     };
 
     final httpResponse = await http.post(

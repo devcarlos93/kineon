@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/kino_mascot.dart';
 import '../../../library/data/repositories/library_repository.dart';
 import '../../domain/entities/media_item.dart';
 import '../providers/ai_picks_provider.dart';
@@ -192,7 +193,7 @@ class _AIPicksSectionState extends State<AIPicksSection> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: _SkeletonAIPickCard(
-              message: widget.isRefining ? 'Refinando recomendaciones...' : null,
+              message: widget.isRefining ? AppLocalizations.of(context).kinoRefiningPicks : null,
             ),
           )
         else if (widget.picks.isEmpty)
@@ -263,7 +264,7 @@ class _AIPicksSectionState extends State<AIPicksSection> {
                   child: _ActionButton(
                     icon: Icons.bookmark_outline_rounded,
                     activeIcon: Icons.bookmark_rounded,
-                    label: 'MI LISTA',
+                    label: l10n.homeMyList.toUpperCase(),
                     isActive: _currentMediaState?.isInWatchlist ?? false,
                     color: colors.accent,
                     onTap: () {
@@ -278,7 +279,7 @@ class _AIPicksSectionState extends State<AIPicksSection> {
                 Expanded(
                   child: _ActionButton(
                     icon: Icons.close_rounded,
-                    label: 'NO ME INTERESA',
+                    label: l10n.homeNotInterested.replaceAll('\n', ' ').toUpperCase(),
                     color: colors.textSecondary,
                     onTap: () {
                       if (_currentPick != null) {
@@ -292,7 +293,7 @@ class _AIPicksSectionState extends State<AIPicksSection> {
                 Expanded(
                   child: _ActionButton(
                     icon: Icons.info_outline_rounded,
-                    label: 'VER DETALLES',
+                    label: l10n.homeViewDetails.replaceAll('\n', ' ').toUpperCase(),
                     color: colors.accentPurple,
                     onTap: () {
                       if (_currentPick != null) {
@@ -326,6 +327,7 @@ class _AIPickCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context);
     final item = pick.item;
     final imageUrl = item.backdropUrl ?? item.posterUrl ?? '';
 
@@ -415,7 +417,7 @@ class _AIPickCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        showAIBadge ? '98% MATCH' : 'TRENDING',
+                        showAIBadge ? l10n.aiPicksMatchBadge : l10n.aiPicksTrendingBadge,
                         style: AppTypography.labelMedium.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -454,7 +456,7 @@ class _AIPickCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'EN LISTA',
+                          l10n.homeInList,
                           style: AppTypography.labelSmall.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
@@ -478,8 +480,8 @@ class _AIPickCard extends StatelessWidget {
                     // Genre/Type tag
                     Text(
                       item.contentType == ContentType.movie
-                          ? 'PELÍCULA'
-                          : 'SERIE',
+                          ? l10n.aiPicksContentMovie
+                          : l10n.aiPicksContentSeries,
                       style: AppTypography.overline.copyWith(
                         color: colors.accent,
                         fontWeight: FontWeight.w700,
@@ -686,18 +688,7 @@ class _SkeletonAIPickCardState extends State<_SkeletonAIPickCard>
                     animation: _animation,
                     builder: (context, child) => Opacity(
                       opacity: _animation.value,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: colors.accent.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.auto_awesome_rounded,
-                          color: colors.accent,
-                          size: 32,
-                        ),
-                      ),
+                      child: const KinoAvatar(size: 56),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -794,6 +785,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -803,21 +795,10 @@ class _EmptyState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colors.accent.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.movie_filter_rounded,
-              size: 32,
-              color: colors.accent,
-            ),
-          ),
+          const KinoMascot(size: 80),
           const SizedBox(height: 16),
           Text(
-            'Cargando recomendaciones...',
+            l10n.kinoLoadingPicks,
             style: AppTypography.bodyLarge.copyWith(
               color: colors.textPrimary,
               fontWeight: FontWeight.w600,
@@ -825,7 +806,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Desliza hacia abajo para actualizar',
+            l10n.kinoLoadingPicksHint,
             style: AppTypography.bodySmall.copyWith(
               color: colors.textSecondary,
             ),
@@ -835,7 +816,7 @@ class _EmptyState extends StatelessWidget {
             GestureDetector(
               onTap: onRefresh,
               child: Text(
-                'Reintentar',
+                l10n.kinoRetry,
                 style: AppTypography.bodyMedium.copyWith(
                   color: colors.accent,
                   fontWeight: FontWeight.w600,

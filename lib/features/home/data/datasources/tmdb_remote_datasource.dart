@@ -4,6 +4,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/l10n/regional_prefs_provider.dart';
 import '../../../../core/network/supabase_client.dart';
+import '../../../movie_details/presentation/providers/watch_providers_provider.dart';
 import '../models/media_item_model.dart';
 import '../models/movie_details_model.dart';
 
@@ -104,6 +105,9 @@ abstract class TmdbRemoteDataSource {
 
   /// Obtiene géneros de series
   Future<List<GenreModel>> getTvGenres();
+
+  /// Obtiene proveedores de streaming disponibles por región
+  Future<List<WatchProvider>> getAvailableWatchProviders({String mediaType = 'movie'});
 }
 
 /// Implementación del datasource remoto de TMDB usando Edge Functions
@@ -366,5 +370,16 @@ class TmdbRemoteDataSourceImpl implements TmdbRemoteDataSource {
   ) async {
     final data = await _callTmdbProxy('discover/tv', query: params);
     return PaginatedResponse.fromJson(data, MediaItemModel.fromTvJson);
+  }
+
+  @override
+  Future<List<WatchProvider>> getAvailableWatchProviders({String mediaType = 'movie'}) async {
+    final data = await _callTmdbProxy('watch/providers/$mediaType', query: {
+      'watch_region': region,
+    });
+    final results = data['results'] as List<dynamic>? ?? [];
+    return results
+        .map((p) => WatchProvider.fromJson(p as Map<String, dynamic>))
+        .toList();
   }
 }

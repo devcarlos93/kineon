@@ -62,6 +62,8 @@ class AIFeatureUsage {
         return 3;
       case 'ai-home-picks':
         return 5;
+      case 'ai-stories':
+        return 5;
       default:
         return 3;
     }
@@ -176,6 +178,7 @@ class AIEndpoints {
   static const search = 'ai-search-plan';
   static const insight = 'ai-movie-insight';
   static const picks = 'ai-home-picks';
+  static const stories = 'ai-stories';
 
   /// Nombres amigables para UI
   static String getDisplayName(String endpoint) {
@@ -188,6 +191,8 @@ class AIEndpoints {
         return 'Insights IA';
       case picks:
         return 'Recomendaciones IA';
+      case stories:
+        return 'Stories IA';
       default:
         return 'IA';
     }

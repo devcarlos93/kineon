@@ -22,6 +22,7 @@ import '../widgets/detail_hero.dart';
 import '../widgets/detail_states.dart';
 import '../widgets/synopsis_section.dart';
 import '../widgets/trailers_section.dart';
+import '../widgets/in_theaters_section.dart';
 import '../widgets/watch_providers_section.dart';
 
 /// Pantalla de detalle de película con diseño Stitch (datos reales de TMDB)
@@ -367,6 +368,18 @@ class _MovieDetailMockScreenState extends ConsumerState<MovieDetailMockScreen> {
         ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+        // Ver en cines (solo películas en cartelera)
+        if (widget.isMovie && _movieDetails != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: InTheatersSection(details: _movieDetails!),
+            ).animate().fadeIn(delay: 230.ms, duration: 400.ms),
+          ),
+
+        if (widget.isMovie && _movieDetails != null)
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
         // Watch Providers (dónde verla)
         SliverToBoxAdapter(

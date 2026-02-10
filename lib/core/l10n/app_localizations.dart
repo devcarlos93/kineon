@@ -59,6 +59,14 @@ class AppLocalizations {
   String get onboardingPrefsTitle => strings.onboardingPrefsTitle;
   String get onboardingPrefsSubtitle => strings.onboardingPrefsSubtitle;
 
+  // Moods
+  String get moodHappy => strings.moodHappy;
+  String get moodEpic => strings.moodEpic;
+  String get moodReflective => strings.moodReflective;
+  String get moodIntense => strings.moodIntense;
+  String get moodRelaxed => strings.moodRelaxed;
+  String get moodNostalgic => strings.moodNostalgic;
+
   // ═══════════════════════════════════════════════════════════════════════════
   // LOGIN
   // ═══════════════════════════════════════════════════════════════════════════
@@ -180,6 +188,10 @@ class AppLocalizations {
   String get aiPicksRefresh => strings.aiPicksRefresh;
   String get aiPicksRefine => strings.aiPicksRefine;
   String get aiPicksPersonalize => strings.aiPicksPersonalize;
+  String get aiPicksContentMovie => strings.aiPicksContentMovie;
+  String get aiPicksContentSeries => strings.aiPicksContentSeries;
+  String get aiPicksMatchBadge => strings.aiPicksMatchBadge;
+  String get aiPicksTrendingBadge => strings.aiPicksTrendingBadge;
 
   // Quick Preferences Bottom Sheet
   String get quickPrefsTitle => strings.quickPrefsTitle;
@@ -199,6 +211,7 @@ class AppLocalizations {
   String get aiIntelligence => strings.aiIntelligence;
   String get aiWelcomeMessage => strings.aiWelcomeMessage;
   String get aiAddedToList => strings.aiAddedToList;
+  String get aiErrorMessage => strings.aiErrorMessage;
   String get aiErrorRetry => strings.aiErrorRetry;
   String get aiQuickReplyRelax => strings.aiQuickReplyRelax;
   String get aiQuickReplySciFi => strings.aiQuickReplySciFi;
@@ -208,6 +221,20 @@ class AppLocalizations {
   String get aiQuickReplyPopular => strings.aiQuickReplyPopular;
   String get aiListening => strings.aiListening;
   String get aiSpeechNotAvailable => strings.aiSpeechNotAvailable;
+  // AI Welcome Screen
+  String get aiWelcomeHello => strings.aiWelcomeHello;
+  String get aiWelcomeGreeting => strings.aiWelcomeGreeting;
+  String get aiViewHistory => strings.aiViewHistory;
+  String get aiNewChat => strings.aiNewChat;
+
+  // Kino Mascot
+  String get kinoTagline => strings.kinoTagline;
+  String get kinoLoadingPicks => strings.kinoLoadingPicks;
+  String get kinoLoadingPicksHint => strings.kinoLoadingPicksHint;
+  String get kinoRefiningPicks => strings.kinoRefiningPicks;
+  String get kinoErrorTitle => strings.kinoErrorTitle;
+  String get kinoRetry => strings.kinoRetry;
+
   String get noTitle => strings.noTitle;
 
   // Watch Providers
@@ -217,6 +244,74 @@ class AppLocalizations {
   String get watchProviderBuy => strings.watchProviderBuy;
   String get watchProviderPoweredBy => strings.watchProviderPoweredBy;
   String get watchProviderNotAvailable => strings.watchProviderNotAvailable;
+
+  // Streaming Filter
+  String get searchFilterStreaming => strings.searchFilterStreaming;
+  String searchFilterStreamingCount(int count) => strings.searchFilterStreamingCount(count);
+  String get searchFilterStreamingApply => strings.searchFilterStreamingApply;
+
+  // Smart Collections
+  String get smartCollections => strings.smartCollections;
+  String get smartCollectionsSubtitle => strings.smartCollectionsSubtitle;
+  String collectionItems(int count) => strings.collectionItems(count);
+  String get collectionWhyIncluded => strings.collectionWhyIncluded;
+  String get collectionShare => strings.collectionShare;
+  String get collectionEmpty => strings.collectionEmpty;
+  String get collectionLoading => strings.collectionLoading;
+
+  // In Theaters
+  String get inTheaters => strings.inTheaters;
+  String get inTheatersKinoMessage => strings.inTheatersKinoMessage;
+  String get inTheatersFindCinemas => strings.inTheatersFindCinemas;
+  String get inTheatersRegionalChain => strings.inTheatersRegionalChain;
+  String get inTheatersShowtimes => strings.inTheatersShowtimes;
+  String get inTheatersRemindMe => strings.inTheatersRemindMe;
+  String get inTheatersInviteFriends => strings.inTheatersInviteFriends;
+  String get inTheatersReminderSet => strings.inTheatersReminderSet;
+  String inTheatersShareText(String title) => strings.inTheatersShareText(title);
+
+  // Onboarding Pro Teaser (Slide 4)
+  String get onboardingTitle4 => strings.onboardingTitle4;
+  String get onboardingAccent4 => strings.onboardingAccent4;
+  String get onboardingDesc4 => strings.onboardingDesc4;
+  String get onboardingProFeature1 => strings.onboardingProFeature1;
+  String get onboardingProFeature2 => strings.onboardingProFeature2;
+  String get onboardingProFeature3 => strings.onboardingProFeature3;
+  String get onboardingProFeature4 => strings.onboardingProFeature4;
+  String get onboardingProFeature5 => strings.onboardingProFeature5;
+  String get onboardingProFeature6 => strings.onboardingProFeature6;
+  String get onboardingProBadge => strings.onboardingProBadge;
+
+  // Usage Progress Bar
+  String usageRemaining(int used, int total) => strings.usageRemaining(used, total);
+  String get usageUnlimited => strings.usageUnlimited;
+  String get usageUpgradeCta => strings.usageUpgradeCta;
+  String get usageAiCredits => strings.usageAiCredits;
+
+  // Smart Paywall (Positive moments)
+  String get smartPaywallTitle => strings.smartPaywallTitle;
+  String get smartPaywallSubtitle => strings.smartPaywallSubtitle;
+  String get smartPaywallCta => strings.smartPaywallCta;
+  String get smartPaywallDismiss => strings.smartPaywallDismiss;
+  String get smartPaywallTrialHint => strings.smartPaywallTrialHint;
+
+  // Stories
+  String get storiesTitle => strings.storiesTitle;
+  String get storiesDescription => strings.storiesDescription;
+  String get storiesCta => strings.storiesCta;
+  String get storiesLoading => strings.storiesLoading;
+  String get storiesEmpty => strings.storiesEmpty;
+  String get storiesError => strings.storiesError;
+  String get storiesSwipeHint => strings.storiesSwipeHint;
+  String get storiesTapToDetails => strings.storiesTapToDetails;
+  String get storiesEndTitle => strings.storiesEndTitle;
+  String get storiesEndSubtitle => strings.storiesEndSubtitle;
+  String get storiesEndAction => strings.storiesEndAction;
+  String get storiesSessionCount => strings.storiesSessionCount;
+  String get storiesProTitle => strings.storiesProTitle;
+  String get storiesProSubtitle => strings.storiesProSubtitle;
+  String get storiesProCta => strings.storiesProCta;
+  String get storiesProFreeLabel => strings.storiesProFreeLabel;
 }
 
 /// Delegate para cargar las localizaciones
@@ -260,6 +355,14 @@ abstract class AppStrings {
 
   String get onboardingPrefsTitle;
   String get onboardingPrefsSubtitle;
+
+  // Moods
+  String get moodHappy;
+  String get moodEpic;
+  String get moodReflective;
+  String get moodIntense;
+  String get moodRelaxed;
+  String get moodNostalgic;
 
   // Login
   String get loginHeadline1;
@@ -345,6 +448,9 @@ abstract class AppStrings {
   String get searchFilterMood;
   String get searchFilterRuntime;
   String get searchFilterYear;
+  String get searchFilterStreaming;
+  String searchFilterStreamingCount(int count);
+  String get searchFilterStreamingApply;
   String get searchFilterRating;
   String get searchAiRecommended;
   String get searchMatch;
@@ -361,6 +467,20 @@ abstract class AppStrings {
   String get searchClear;
   String get searchFilterMaxRuntime;
   String get searchFilterMinRating;
+  String get searchDiscoveryPlaceholder;
+  String get searchDiscoveryListening;
+  String get searchDiscoveryTryPrefix;
+  String get searchDiscoveryEmptyTitle;
+  String get searchDiscoveryEmptySubtitle;
+  List<String> get searchDiscoverySuggestions;
+  String get searchDiscoveryLoading;
+  String get searchDiscoveryAiRecommended;
+  String get searchDiscoveryMatch;
+  String get searchDiscoveryErrorTitle;
+  String get searchDiscoveryNoResultsTitle;
+  String get searchDiscoveryNoResultsSubtitle;
+  Map<int, String> get genreBadgeNames;
+  List<String> get searchFilterMoodOptions;
 
   // AI Screen
   String get aiTitle;
@@ -538,6 +658,8 @@ abstract class AppStrings {
   String get profileFeatureOfflineSync;
   String get profileFeatureEarlyAccess;
   String get profileFeatureUnlimitedLists;
+  String get profileFeatureStories;
+  String get profileFeatureSmartCollections;
 
   // Paywall
   String get paywallTitle;
@@ -585,6 +707,10 @@ abstract class AppStrings {
   String get aiPicksRefresh;
   String get aiPicksRefine;
   String get aiPicksPersonalize;
+  String get aiPicksContentMovie;
+  String get aiPicksContentSeries;
+  String get aiPicksMatchBadge;
+  String get aiPicksTrendingBadge;
 
   // Quick Preferences Bottom Sheet
   String get quickPrefsTitle;
@@ -594,6 +720,20 @@ abstract class AppStrings {
   String get quickPrefsGenresLabel;
   String get quickPrefsSave;
   String get quickPrefsCancel;
+
+  // AI Welcome Screen
+  String get aiWelcomeHello;
+  String get aiWelcomeGreeting;
+  String get aiViewHistory;
+  String get aiNewChat;
+
+  // Kino Mascot / AI states
+  String get kinoTagline;
+  String get kinoLoadingPicks;
+  String get kinoLoadingPicksHint;
+  String get kinoRefiningPicks;
+  String get kinoErrorTitle;
+  String get kinoRetry;
 
   // General Fallbacks
   String get noTitle;
@@ -605,4 +745,67 @@ abstract class AppStrings {
   String get watchProviderBuy;
   String get watchProviderPoweredBy;
   String get watchProviderNotAvailable;
+
+  // Smart Collections
+  String get smartCollections;
+  String get smartCollectionsSubtitle;
+  String collectionItems(int count);
+  String get collectionWhyIncluded;
+  String get collectionShare;
+  String get collectionEmpty;
+  String get collectionLoading;
+
+  // In Theaters
+  String get inTheaters;
+  String get inTheatersKinoMessage;
+  String get inTheatersFindCinemas;
+  String get inTheatersRegionalChain;
+  String get inTheatersShowtimes;
+  String get inTheatersRemindMe;
+  String get inTheatersInviteFriends;
+  String get inTheatersReminderSet;
+  String inTheatersShareText(String title);
+
+  // Onboarding Pro Teaser (Slide 4)
+  String get onboardingTitle4;
+  String get onboardingAccent4;
+  String get onboardingDesc4;
+  String get onboardingProFeature1;
+  String get onboardingProFeature2;
+  String get onboardingProFeature3;
+  String get onboardingProFeature4;
+  String get onboardingProFeature5;
+  String get onboardingProFeature6;
+  String get onboardingProBadge;
+
+  // Usage Progress Bar
+  String usageRemaining(int used, int total);
+  String get usageUnlimited;
+  String get usageUpgradeCta;
+  String get usageAiCredits;
+
+  // Smart Paywall (Positive moments)
+  String get smartPaywallTitle;
+  String get smartPaywallSubtitle;
+  String get smartPaywallCta;
+  String get smartPaywallDismiss;
+  String get smartPaywallTrialHint;
+
+  // Stories
+  String get storiesTitle;
+  String get storiesDescription;
+  String get storiesCta;
+  String get storiesLoading;
+  String get storiesEmpty;
+  String get storiesError;
+  String get storiesSwipeHint;
+  String get storiesTapToDetails;
+  String get storiesEndTitle;
+  String get storiesEndSubtitle;
+  String get storiesEndAction;
+  String get storiesSessionCount;
+  String get storiesProTitle;
+  String get storiesProSubtitle;
+  String get storiesProCta;
+  String get storiesProFreeLabel;
 }

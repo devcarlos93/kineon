@@ -242,6 +242,17 @@ class RegionalPrefsNotifier extends StateNotifier<RegionalPrefs> {
     ));
   }
 
+  /// Actualiza solo el idioma manteniendo el país actual
+  /// Se usa cuando el usuario cambia idioma desde el perfil
+  Future<void> setLanguage(String languageCode) async {
+    final currentCountry = state.countryCode;
+    final languageTag = '$languageCode-$currentCountry';
+    await setRegionalPrefs(RegionalPrefs(
+      countryCode: currentCountry,
+      languageTag: languageTag,
+    ));
+  }
+
   /// Infiere el language tag basado en el país
   String _inferLanguageTag(String countryCode) {
     switch (countryCode.toUpperCase()) {

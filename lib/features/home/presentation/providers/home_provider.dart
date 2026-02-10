@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/cache/cache_service.dart';
+import '../../../../core/l10n/regional_prefs_provider.dart';
 import '../../../library/data/repositories/library_repository.dart';
 import '../../../library/presentation/providers/library_providers.dart';
 import '../../data/repositories/media_repository_impl.dart';
@@ -69,10 +70,15 @@ class HomeState {
 class HomeNotifier extends StateNotifier<HomeState> {
   final MediaRepository _repository;
   final CacheService _cache;
+  final String _lang;
 
-  static const String _cacheKey = 'home_data_v1';
+  String get _cacheKey => '${_lang}_home_data_v1';
 
-  HomeNotifier(this._repository, this._cache) : super(const HomeState());
+  HomeNotifier(this._repository, this._cache, {String languageCode = 'es'})
+      : _lang = languageCode,
+        super(const HomeState()) {
+    loadHomeData();
+  }
 
   /// Carga todos los datos del home con estrategia cache-first
   /// 1. Render inmediato desde cache local (si existe)
@@ -221,13 +227,12 @@ class HomeNotifier extends StateNotifier<HomeState> {
 }
 
 /// Provider del Home con cache local para render instantáneo
-/// Usa ref.read para evitar rebuilds cuando cambian dependencias durante init
+/// Usa ref.watch en mediaRepositoryProvider para recrearse cuando cambia el idioma
 final homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {
-  // IMPORTANTE: usar ref.read en vez de ref.watch para evitar que el provider
-  // se reconstruya cuando connectivityProvider o cacheServiceProvider cambian
-  final repository = ref.read(mediaRepositoryProvider);
+  final repository = ref.watch(mediaRepositoryProvider);
   final cache = ref.read(cacheServiceProvider);
-  return HomeNotifier(repository, cache);
+  final lang = ref.watch(regionalPrefsProvider).languageCode;
+  return HomeNotifier(repository, cache, languageCode: lang);
 });
 
 /// Provider para película/serie destacada (primera de trending)

@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/kino_mascot.dart';
 import '../../../../core/widgets/kineon_logo.dart';
 
 /// Pantalla de Splash que verifica el estado de autenticación
@@ -76,10 +77,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Kino mascot animado
+              const KinoMascot(size: 100)
+                  .animate()
+                  .fadeIn(duration: 500.ms)
+                  .slideY(begin: 0.3, end: 0, duration: 600.ms, curve: Curves.easeOutBack),
+
+              const SizedBox(height: 24),
+
               // Logo animado
               _buildLogo(colors)
                   .animate()
-                  .fadeIn(duration: 600.ms)
+                  .fadeIn(delay: 200.ms, duration: 600.ms)
                   .scale(
                     begin: const Offset(0.8, 0.8),
                     end: const Offset(1.0, 1.0),

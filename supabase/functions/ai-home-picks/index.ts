@@ -276,7 +276,8 @@ const GENRE_ID_TO_NAME: Record<number, string> = {
 async function generateSearchCriteria(
   history: UserHistory,
   timeOfDay: string,
-  pickCount: number
+  pickCount: number,
+  storyMode: boolean = false
 ): Promise<SearchCriteria[]> {
   // Generar un seed aleatorio para forzar variabilidad en cada request
   const randomSeed = Math.floor(Math.random() * 10000);
@@ -302,6 +303,10 @@ async function generateSearchCriteria(
   const isEnglish = globalLanguage.startsWith("en");
   const reasonLanguage = isEnglish ? "English" : "Spanish (español)";
 
+  const storyModeInstruction = storyMode
+    ? `\n6. STORY MODE: The "reason" field must be a SHORT HOOK (20-50 chars max), punchy, catchy, like a headline. Optional emoji at start. Examples: "🔥 Tu próximo favorito", "Mind-bending thriller", "🎬 Imperdible este año"\n7. IMPORTANT: Set vote_min >= 7.0 to prioritize quality content for stories`
+    : "";
+
   const systemPrompt = `You are an expert film and series curator. Your task is to generate SEARCH CRITERIA for TMDB, NOT specific titles.
 
 STRICT RULES:
@@ -309,7 +314,7 @@ STRICT RULES:
 2. Each criterion must generate DIFFERENT results (vary genres, years, etc.)
 3. Genres must be numeric TMDB IDs
 4. Valid JSON format, no additional text
-5. The "reason" field must be personalized and in ${reasonLanguage}
+5. The "reason" field must be personalized and in ${reasonLanguage}${storyModeInstruction}
 
 AVAILABLE TMDB GENRES (use these IDs):
 - Movies: 28(Action), 12(Adventure), 16(Animation), 35(Comedy), 80(Crime), 99(Documentary), 18(Drama), 10751(Family), 14(Fantasy), 36(History), 27(Horror), 10402(Music), 9648(Mystery), 10749(Romance), 878(Sci-Fi), 53(Thriller), 10752(War), 37(Western)
@@ -324,7 +329,7 @@ RESPONSE FORMAT (JSON array):
     "vote_min": 7.0,
     "content_type": "movie",
     "sort_by": "popularity.desc",
-    "reason": "${isEnglish ? "Because you love action movies with impressive visual effects" : "Porque te gustan las películas de acción con efectos visuales impresionantes"}"
+    "reason": "${storyMode ? (isEnglish ? "🔥 Your next obsession" : "🔥 Tu próxima obsesión") : (isEnglish ? "Because you love action movies with impressive visual effects" : "Porque te gustan las películas de acción con efectos visuales impresionantes")}"
   }
 ]
 
@@ -555,7 +560,8 @@ async function getFallbackPicks(pickCount: number): Promise<AIPick[]> {
 
 async function generateAIPicks(
   history: UserHistory,
-  pickCount: number
+  pickCount: number,
+  storyMode: boolean = false
 ): Promise<AIPick[]> {
   // Determinar momento del dia
   const hour = new Date().getHours();
@@ -566,7 +572,7 @@ async function generateAIPicks(
   else timeOfDay = "madrugada";
 
   // 1. Generar criterios con IA
-  const criteria = await generateSearchCriteria(history, timeOfDay, pickCount);
+  const criteria = await generateSearchCriteria(history, timeOfDay, pickCount, storyMode);
 
   // 2. Para cada criterio, buscar en TMDB
   const picks: AIPick[] = [];
@@ -586,7 +592,10 @@ async function generateAIPicks(
       // Filtrar resultados que no estan en historial
       const availableResults = results.filter(result => {
         const key = `${criterion.content_type}:${result.id}`;
-        return !usedIds.has(key);
+        if (usedIds.has(key)) return false;
+        // En story mode, filtrar sin backdrop_path
+        if (storyMode && !result.backdrop_path) return false;
+        return true;
       });
 
       if (availableResults.length > 0) {
@@ -639,14 +648,17 @@ serve(async (req: Request): Promise<Response> => {
     const user = await validateUser(req);
 
     // 2. Parsear body
-    let body: { pick_count?: number; language?: string; region?: string } = {};
+    let body: { pick_count?: number; language?: string; region?: string; story_mode?: boolean } = {};
     try {
       body = await req.json();
     } catch {
       // Body vacio es OK
     }
 
-    const pickCount = Math.min(Math.max(body.pick_count || 5, 1), 10);
+    const storyMode = body.story_mode === true;
+    const maxPicks = storyMode ? 15 : 10;
+    const defaultPicks = storyMode ? 12 : 5;
+    const pickCount = Math.min(Math.max(body.pick_count || defaultPicks, 1), maxPicks);
 
     // Configurar language/region global para las llamadas TMDB
     globalLanguage = body.language || "es-ES";
@@ -669,7 +681,7 @@ serve(async (req: Request): Promise<Response> => {
         throw new Error("No AI API key configured");
       }
 
-      picks = await generateAIPicks(history, pickCount);
+      picks = await generateAIPicks(history, pickCount, storyMode);
       source = "ai";
 
       // Si IA no devolvio suficientes, complementar con fallback

@@ -1,17 +1,43 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../data/services/profile_service.dart';
 import '../../domain/models/user_preferences.dart';
 
-/// Moods predefinidos disponibles
-const List<String> availableMoods = [
-  'Feliz',
-  'Épico',
-  'Reflexivo',
-  'Intenso',
-  'Relajado',
-  'Nostálgico',
+/// Keys internas de los moods (se guardan en DB)
+const List<String> moodKeys = [
+  'happy',
+  'epic',
+  'reflective',
+  'intense',
+  'relaxed',
+  'nostalgic',
 ];
+
+/// Obtiene el label localizado para un mood key
+String getMoodLabel(BuildContext context, String key) {
+  final l10n = AppLocalizations.of(context);
+  switch (key) {
+    case 'happy':
+      return l10n.moodHappy;
+    case 'epic':
+      return l10n.moodEpic;
+    case 'reflective':
+      return l10n.moodReflective;
+    case 'intense':
+      return l10n.moodIntense;
+    case 'relaxed':
+      return l10n.moodRelaxed;
+    case 'nostalgic':
+      return l10n.moodNostalgic;
+    default:
+      return key;
+  }
+}
+
+/// @deprecated Use moodKeys + getMoodLabel instead
+const List<String> availableMoods = moodKeys;
 
 /// Estado del onboarding de preferencias
 class OnboardingPreferencesState {
